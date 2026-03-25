@@ -1,0 +1,40 @@
+appId: com.feraille.desktop
+productName: Ferraille Desktop
+
+directories:
+  output: release
+  buildResources: assets
+
+files:
+  - dist/**/*
+  - dist-electron/**/*
+
+extraResources:
+  - from: assets/
+    to: assets/
+    filter:
+      - "**/*"
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: assets/icon.ico
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  installerLanguages:
+    - fr_FR
+    - en_US
+  language: 1036
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Ferraille Desktop
+
+publish:
+  provider: github
+  owner: GITHUB_OWNER_PLACEHOLDER
+  repo: feraille-app
+  releaseType: release
