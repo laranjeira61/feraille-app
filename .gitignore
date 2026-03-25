@@ -1,0 +1,32 @@
+# Dépendances
+node_modules/
+**/node_modules/
+
+# Base de données locale
+backend/data/
+*.db
+*.sqlite
+
+# Builds
+android/build/
+android/.gradle/
+desktop/dist/
+desktop/build/
+*.apk
+
+# Logs
+deploy/update.log
+*.log
+
+# Environnement
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
