@@ -1,0 +1,67 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Build Android APK with EAS Build
+#
+# Prerequisites (one-time setup):
+#   1. Create an Expo account at https://expo.dev
+#   2. Go to https://expo.dev/accounts/[your-username]/settings/access-tokens
+#      and create a new token.
+#   3. In your GitHub repo → Settings → Secrets and variables → Actions,
+#      add a secret named EXPO_TOKEN with the value from step 2.
+#   4. Run `eas init` once locally inside the android/ folder to link the
+#      project to your Expo account (generates the "extra.eas.projectId"
+#      field in app.json).
+#
+# After each successful build EAS prints the APK download URL in the logs.
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: Build Android APK
+
+on:
+  # Trigger on push to main — only when android/ files change
+  push:
+    branches:
+      - main
+    paths:
+      - 'android/**'
+
+  # Allow manual trigger from the GitHub Actions UI
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: EAS Build — Android APK
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        # All commands run inside the android/ subdirectory
+        working-directory: android
+
+    steps:
+      # 1. Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Set up Node.js 18
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: android/package-lock.json
+
+      # 3. Install project dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # 4. Install EAS CLI globally
+      - name: Install EAS CLI
+        run: npm install --global eas-cli
+
+      # 5. Build the APK using EAS (preview profile = APK, not AAB)
+      #    The EXPO_TOKEN secret authenticates with Expo's build service.
+      #    The APK download URL is printed at the end of this step's output.
+      - name: Build Android APK (preview)
+        run: eas build --platform android --profile preview --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
