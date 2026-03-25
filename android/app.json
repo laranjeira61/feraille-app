@@ -4,12 +4,19 @@
     "slug": "feraille-app",
     "version": "1.0.0",
     "orientation": "landscape",
-    "platforms": ["android"],
+    "platforms": [
+      "android"
+    ],
     "android": {
       "package": "com.feraille.app",
       "versionCode": 1,
       "permissions": []
     },
-    "backgroundColor": "#f5f5f5"
+    "backgroundColor": "#f5f5f5",
+    "extra": {
+      "eas": {
+        "projectId": "06089b56-ea66-4a4e-b384-60fcf8cc359e"
+      }
+    }
   }
 }
