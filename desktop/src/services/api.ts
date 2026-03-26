@@ -68,7 +68,9 @@ const apiClient = axios.create({
 
 // Update baseURL dynamically when API URL changes
 apiClient.interceptors.request.use((config) => {
-  config.baseURL = getApiUrl()
+  const url = getApiUrl()
+  // Ensure URL has a protocol prefix
+  config.baseURL = url.startsWith('http') ? url : `http://${url}`
   return config
 })
 

@@ -185,7 +185,17 @@ function AppSider({ collapsed, onCollapse }: { collapsed: boolean; onCollapse: (
 
 function AppLayout() {
   const [collapsed, setCollapsed] = useState(false)
-  const apiConfigured = isApiConfigured()
+  const [apiConfigured, setApiConfigured] = useState(isApiConfigured())
+  const [currentApiUrl, setCurrentApiUrl] = useState(getApiUrl())
+
+  useEffect(() => {
+    const handleApiUrlChanged = () => {
+      setApiConfigured(isApiConfigured())
+      setCurrentApiUrl(getApiUrl())
+    }
+    window.addEventListener('api-url-changed', handleApiUrlChanged)
+    return () => window.removeEventListener('api-url-changed', handleApiUrlChanged)
+  }, [])
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -211,7 +221,7 @@ function AppLayout() {
             Ferraille — Gestion des fiches
           </Text>
           <Space align="center" size={16}>
-            <Tooltip title={`API: ${getApiUrl()}`}>
+            <Tooltip title={`API: ${currentApiUrl}`}>
               <Space size={4}>
                 <ApiOutlined
                   style={{
@@ -221,7 +231,7 @@ function AppLayout() {
                 />
                 {!collapsed && (
                   <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>
-                    {getApiUrl().replace(/^https?:\/\//, '').split('/')[0]}
+                    {currentApiUrl.replace(/^https?:\/\//, '').split('/')[0]}
                   </Text>
                 )}
               </Space>

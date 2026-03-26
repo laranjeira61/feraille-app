@@ -141,6 +141,7 @@ const AdminPage: React.FC = () => {
       return
     }
     setApiUrl(apiUrlInput.trim())
+    window.dispatchEvent(new Event('api-url-changed'))
     setApiUrlSaved(true)
     message.success('URL API sauvegardée. Reconnexion...')
     setTimeout(() => {
