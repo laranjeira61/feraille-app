@@ -107,7 +107,7 @@ const FicheScreen: React.FC = () => {
     if (!apiConfigured) {
       Alert.alert(
         'API non configurée',
-        'Appuyez longuement sur "FERRAILLE" pour accéder aux paramètres.'
+        'Appuyez longuement sur "TicketPro" pour accéder aux paramètres.'
       );
       return;
     }
@@ -130,7 +130,7 @@ const FicheScreen: React.FC = () => {
         employe_nom: selectedEmploye.nom,
         client: client.trim(),
         notes_dessin: drawingData,
-        source: 'FERRAILLE',
+        source: 'TicketPro',
       });
 
       // Success
@@ -188,7 +188,7 @@ const FicheScreen: React.FC = () => {
           activeOpacity={1}
           style={styles.titleTouchable}
         >
-          <Text style={styles.headerTitle}>FERRAILLE</Text>
+          <Text style={styles.headerTitle}>TicketPro</Text>
         </TouchableOpacity>
 
         {/* Date & clock */}
@@ -205,7 +205,7 @@ const FicheScreen: React.FC = () => {
         <View style={styles.noBanner}>
           <Text style={styles.noBannerText}>
             ⚠️  API non configurée — appuyez longuement sur{' '}
-            <Text style={styles.noBannerBold}>FERRAILLE</Text> pour accéder aux
+            <Text style={styles.noBannerBold}>TicketPro</Text> pour accéder aux
             paramètres.
           </Text>
         </View>

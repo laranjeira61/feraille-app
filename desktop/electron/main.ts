@@ -13,7 +13,7 @@ function createWindow() {
     height: 800,
     minWidth: 1000,
     minHeight: 600,
-    title: 'Ferraille Desktop',
+    title: 'TicketPro',
     backgroundColor: '#f0f2f5',
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
@@ -92,8 +92,8 @@ function buildMenu() {
           click: () => {
             dialog.showMessageBox(mainWindow!, {
               type: 'info',
-              title: 'À propos de Ferraille Desktop',
-              message: 'Ferraille Desktop',
+              title: 'À propos de TicketPro',
+              message: 'TicketPro',
               detail: `Version: ${app.getVersion()}\nApplication de gestion des fiches pour ferrailleur.\n\n© 2024 - Tous droits réservés`,
               buttons: ['OK'],
             })
@@ -152,7 +152,7 @@ ipcMain.on('install-update', () => {
 ipcMain.handle('show-update-notification', (_event, type: 'available' | 'downloaded') => {
   if (Notification.isSupported()) {
     const notification = new Notification({
-      title: 'Ferraille Desktop',
+      title: 'TicketPro',
       body: type === 'available'
         ? 'Une mise à jour est disponible. Téléchargement en cours...'
         : 'Mise à jour prête. Redémarrez l\'application pour l\'installer.',

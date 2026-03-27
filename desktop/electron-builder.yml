@@ -1,5 +1,5 @@
 appId: com.feraille.desktop
-productName: Ferraille Desktop
+productName: TicketPro
 
 directories:
   output: release
@@ -31,10 +31,10 @@ nsis:
   language: 1036
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: Ferraille Desktop
+  shortcutName: TicketPro
 
 publish:
   provider: github
-  owner: GITHUB_OWNER_PLACEHOLDER
+  owner: laranjeira61
   repo: feraille-app
   releaseType: release

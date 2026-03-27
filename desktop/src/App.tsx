@@ -157,7 +157,7 @@ function AppSider({ collapsed, onCollapse }: { collapsed: boolean; onCollapse: (
       >
         {!collapsed && (
           <Text style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>
-            Ferraille
+            TicketPro
           </Text>
         )}
       </div>
@@ -218,7 +218,7 @@ function AppLayout() {
           }}
         >
           <Text style={{ color: '#fff', fontWeight: 700, fontSize: 16 }}>
-            Ferraille — Gestion des fiches
+            TicketPro — Gestion des fiches
           </Text>
           <Space align="center" size={16}>
             <Tooltip title={`API: ${currentApiUrl}`}>

@@ -1,7 +1,7 @@
 {
   "name": "feraille-desktop",
   "version": "1.0.0",
-  "description": "Ferraille Desktop - Gestion des fiches pour secrétaire",
+  "description": "TicketPro - Gestion des fiches pour secrétaire",
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
@@ -34,7 +34,7 @@
   },
   "build": {
     "appId": "com.feraille.desktop",
-    "productName": "Ferraille Desktop",
+    "productName": "TicketPro",
     "directories": {
       "output": "release"
     },

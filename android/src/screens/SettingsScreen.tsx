@@ -183,7 +183,7 @@ const SettingsScreen: React.FC = () => {
           <Text style={styles.infoTitle}>ℹ️  Comment accéder à ces paramètres</Text>
           <Text style={styles.infoText}>
             Appuyez longuement (2 secondes) sur le titre{' '}
-            <Text style={styles.infoCode}>FERRAILLE</Text> dans la barre d'en-tête
+            <Text style={styles.infoCode}>TicketPro</Text> dans la barre d'en-tête
             de l'écran principal.
           </Text>
         </View>
