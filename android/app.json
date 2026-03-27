@@ -17,6 +17,16 @@
     "splash": {
       "backgroundColor": "#1a1a2e"
     },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": "06089b56-ea66-4a4e-b384-60fcf8cc359e"
