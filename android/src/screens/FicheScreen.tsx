@@ -16,6 +16,7 @@ import {
   Image,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useNavigation } from '@react-navigation/native';
 
 import DrawingCanvas, { DrawingCanvasRef } from '../components/DrawingCanvas';
 import EmployeePicker from '../components/EmployeePicker';
@@ -25,11 +26,8 @@ import { formatDateLong, formatTime } from '../utils/date';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-interface FicheScreenProps {
-  onOpenSettings: () => void;
-}
-
-const FicheScreen: React.FC<FicheScreenProps> = ({ onOpenSettings }) => {
+const FicheScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
   const canvasRef = useRef<DrawingCanvasRef>(null);
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -180,7 +178,7 @@ const FicheScreen: React.FC<FicheScreenProps> = ({ onOpenSettings }) => {
   // ── Title long-press handlers ──────────────────────────────────────────────
   const handleTitlePressIn = () => {
     longPressTimer.current = setTimeout(() => {
-      onOpenSettings();
+      navigation.navigate('Settings');
     }, 2000);
   };
   const handleTitlePressOut = () => {
