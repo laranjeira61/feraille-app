@@ -11,13 +11,15 @@ import {
   ScrollView,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useNavigation } from '@react-navigation/native';
 import { getApiUrl, saveApiUrl, checkVersion } from '../services/api';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const SettingsScreen: React.FC = () => {
-  const navigation = useNavigation();
+interface SettingsScreenProps {
+  onBack: () => void;
+}
+
+const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
 
   const [apiUrl, setApiUrl] = useState('');
   const [saving, setSaving] = useState(false);
@@ -47,7 +49,7 @@ const SettingsScreen: React.FC = () => {
       await saveApiUrl(apiUrl.trim());
       setTestResult(null);
       Alert.alert('Enregistré', "L'URL API a été sauvegardée.", [
-        { text: 'OK', onPress: () => navigation.goBack() },
+        { text: 'OK', onPress: () => onBack() },
       ]);
     } catch {
       Alert.alert('Erreur', "Impossible de sauvegarder l'URL.");
@@ -92,7 +94,7 @@ const SettingsScreen: React.FC = () => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => onBack()}
           activeOpacity={0.8}
         >
           <Text style={styles.backButtonText}>← Retour</Text>

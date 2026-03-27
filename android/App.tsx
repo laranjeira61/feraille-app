@@ -1,34 +1,27 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import React, { useState } from 'react';
+import { View, StyleSheet } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 
 import FicheScreen from './src/screens/FicheScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 
-export type RootStackParamList = {
-  Fiche: undefined;
-  Settings: undefined;
-};
-
-const Stack = createNativeStackNavigator<RootStackParamList>();
+export type Screen = 'Fiche' | 'Settings';
 
 export default function App() {
+  const [screen, setScreen] = useState<Screen>('Fiche');
+
   return (
-    <SafeAreaProvider>
-      <NavigationContainer>
-        <Stack.Navigator
-          initialRouteName="Fiche"
-          screenOptions={{ headerShown: false }}
-        >
-          <Stack.Screen name="Fiche" component={FicheScreen} />
-          <Stack.Screen
-            name="Settings"
-            component={SettingsScreen}
-            options={{ presentation: 'modal' }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </SafeAreaProvider>
+    <View style={styles.root}>
+      <StatusBar style="light" hidden />
+      {screen === 'Settings' ? (
+        <SettingsScreen onBack={() => setScreen('Fiche')} />
+      ) : (
+        <FicheScreen onOpenSettings={() => setScreen('Settings')} />
+      )}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+});

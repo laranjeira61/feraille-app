@@ -16,7 +16,6 @@ import {
   Image,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 import DrawingCanvas, { DrawingCanvasRef } from '../components/DrawingCanvas';
 import EmployeePicker from '../components/EmployeePicker';
@@ -26,8 +25,11 @@ import { formatDateLong, formatTime } from '../utils/date';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const FicheScreen: React.FC = () => {
-  const navigation = useNavigation<any>();
+interface FicheScreenProps {
+  onOpenSettings: () => void;
+}
+
+const FicheScreen: React.FC<FicheScreenProps> = ({ onOpenSettings }) => {
   const canvasRef = useRef<DrawingCanvasRef>(null);
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -77,21 +79,19 @@ const FicheScreen: React.FC = () => {
   }, []);
 
   // ── Check API config & load employees when screen is focused ───────────────
-  useFocusEffect(
-    useCallback(() => {
-      const init = async () => {
-        const url = await getApiUrl();
-        if (!url) {
-          setApiConfigured(false);
-          setErrorEmployes(true);
-          return;
-        }
-        setApiConfigured(true);
-        loadEmployes();
-      };
-      init();
-    }, [])
-  );
+  useEffect(() => {
+    const init = async () => {
+      const url = await getApiUrl();
+      if (!url) {
+        setApiConfigured(false);
+        setErrorEmployes(true);
+        return;
+      }
+      setApiConfigured(true);
+      loadEmployes();
+    };
+    init();
+  }, []);
 
   const loadEmployes = async () => {
     setLoadingEmployes(true);
@@ -180,7 +180,7 @@ const FicheScreen: React.FC = () => {
   // ── Title long-press handlers ──────────────────────────────────────────────
   const handleTitlePressIn = () => {
     longPressTimer.current = setTimeout(() => {
-      navigation.navigate('Settings');
+      onOpenSettings();
     }, 2000);
   };
   const handleTitlePressOut = () => {
