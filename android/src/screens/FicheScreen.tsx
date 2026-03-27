@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  Image,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -20,7 +21,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import DrawingCanvas, { DrawingCanvasRef } from '../components/DrawingCanvas';
 import EmployeePicker from '../components/EmployeePicker';
 import ConfirmModal, { ModalType } from '../components/ConfirmModal';
-import { getEmployes, createFiche, getApiUrl, Employe } from '../services/api';
+import { getEmployes, createFiche, getApiUrl, getSetting, Employe } from '../services/api';
 import { formatDateLong, formatTime } from '../utils/date';
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -45,6 +46,12 @@ const FicheScreen: React.FC = () => {
   const [client, setClient] = useState('');
   const [drawingData, setDrawingData] = useState<string>('');
 
+  // ── Logo state ─────────────────────────────────────────────────────────────
+  const [logoBase64, setLogoBase64] = useState<string | null>(null);
+
+  // ── Eraser state ───────────────────────────────────────────────────────────
+  const [eraserActive, setEraserActive] = useState(false);
+
   // ── Submission state ───────────────────────────────────────────────────────
   const [submitting, setSubmitting] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -62,6 +69,11 @@ const FicheScreen: React.FC = () => {
     return () => {
       if (clockRef.current) clearInterval(clockRef.current);
     };
+  }, []);
+
+  // ── Fetch logo on mount ────────────────────────────────────────────────────
+  useEffect(() => {
+    getSetting('logo').then(val => setLogoBase64(val || null));
   }, []);
 
   // ── Check API config & load employees when screen is focused ───────────────
@@ -101,6 +113,13 @@ const FicheScreen: React.FC = () => {
     setDrawingData('');
     canvasRef.current?.clear();
   }, []);
+
+  // ── Eraser toggle ──────────────────────────────────────────────────────────
+  function toggleEraser() {
+    const next = !eraserActive;
+    setEraserActive(next);
+    canvasRef.current?.setEraserMode(next);
+  }
 
   // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = useCallback(async () => {
@@ -188,7 +207,10 @@ const FicheScreen: React.FC = () => {
           activeOpacity={1}
           style={styles.titleTouchable}
         >
-          <Text style={styles.headerTitle}>TicketPro</Text>
+          {logoBase64
+            ? <Image source={{ uri: logoBase64 }} style={styles.headerLogo} resizeMode="contain" />
+            : <Text style={styles.headerTitle}>TicketPro</Text>
+          }
         </TouchableOpacity>
 
         {/* Date & clock */}
@@ -300,16 +322,27 @@ const FicheScreen: React.FC = () => {
         <View style={styles.canvasPanel}>
           <View style={styles.canvasHeader}>
             <Text style={styles.fieldLabel}>Notes (écrire au doigt)</Text>
-            <TouchableOpacity
-              style={styles.clearButton}
-              onPress={() => {
-                canvasRef.current?.clear();
-                setDrawingData('');
-              }}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.clearButtonText}>Effacer</Text>
-            </TouchableOpacity>
+            <View style={styles.canvasHeaderButtons}>
+              <TouchableOpacity
+                style={[styles.toolButton, eraserActive && styles.toolButtonActive]}
+                onPress={toggleEraser}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.toolButtonText, eraserActive && styles.toolButtonTextActive]}>
+                  {eraserActive ? '✏️ Stylet' : '⬜ Gomme'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.clearButton}
+                onPress={() => {
+                  canvasRef.current?.clear();
+                  setDrawingData('');
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.clearButtonText}>Effacer tout</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <DrawingCanvas
@@ -365,6 +398,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 4,
   },
+  headerLogo: {
+    height: 44,
+    width: 160,
+    resizeMode: 'contain',
+  },
   headerRight: {
     alignItems: 'flex-end',
   },
@@ -404,27 +442,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
 
-  // ── Form panel (left ~40%) ───────────────────────────────────────────────
+  // ── Form panel (left ~32%) ───────────────────────────────────────────────
   formPanel: {
-    width: '40%',
+    width: '32%',
     backgroundColor: '#ffffff',
     borderRightWidth: 1,
     borderRightColor: '#e0e0e0',
   },
   formPanelContent: {
-    padding: 24,
+    padding: 12,
     flexGrow: 1,
   },
   fieldLabel: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: '#333',
-    marginBottom: 10,
+    marginBottom: 6,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   fieldSpacer: {
-    height: 20,
+    height: 12,
   },
   formButtonsSpacer: {
     flex: 1,
@@ -510,6 +548,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 12,
+  },
+  canvasHeaderButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  toolButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#1a1a2e',
+    backgroundColor: '#fff',
+  },
+  toolButtonActive: {
+    backgroundColor: '#1a1a2e',
+  },
+  toolButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1a1a2e',
+  },
+  toolButtonTextActive: {
+    color: '#fff',
   },
   clearButton: {
     backgroundColor: '#c62828',

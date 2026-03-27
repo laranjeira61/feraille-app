@@ -7,6 +7,7 @@ const helmet = require('helmet');
 const fichesRouter = require('./routes/fiches');
 const employesRouter = require('./routes/employes');
 const exportRouter = require('./routes/export');
+const settingsRouter = require('./routes/settings');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 
 const app = express();
@@ -49,6 +50,7 @@ app.get('/api/version', (req, res) => {
 app.use('/api/fiches', fichesRouter);
 app.use('/api/employes', employesRouter);
 app.use('/api/export', exportRouter);
+app.use('/api/settings', settingsRouter);
 
 // 404 handler
 app.use(notFound);

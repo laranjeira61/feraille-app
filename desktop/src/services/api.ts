@@ -141,4 +141,17 @@ export async function exportPdf(params: ExportPdfParams): Promise<ArrayBuffer> {
   return response.data as ArrayBuffer
 }
 
+export async function getSetting(key: string): Promise<string | null> {
+  try {
+    const response = await apiClient.get<{ key: string; value: string }>(`/api/settings/${key}`)
+    return response.data.value
+  } catch {
+    return null
+  }
+}
+
+export async function setSetting(key: string, value: string): Promise<void> {
+  await apiClient.put(`/api/settings/${key}`, { value })
+}
+
 export default apiClient

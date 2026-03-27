@@ -1,5 +1,5 @@
-import React, { useRef, forwardRef, useImperativeHandle } from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import React, { useRef, forwardRef, useImperativeHandle, useEffect } from 'react';
+import { View, StyleSheet } from 'react-native';
 import SignatureCanvas from 'react-native-signature-canvas';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -9,6 +9,8 @@ export interface DrawingCanvasRef {
   clear: () => void;
   /** Reads the current drawing as a base64 PNG data URI */
   readSignature: () => void;
+  /** Toggles eraser mode — true = eraser, false = pen */
+  setEraserMode: (active: boolean) => void;
 }
 
 interface DrawingCanvasProps {
@@ -16,6 +18,8 @@ interface DrawingCanvasProps {
   onSave: (dataUri: string) => void;
   /** Called when the canvas is cleared or empty */
   onEmpty?: () => void;
+  /** Pen color (CSS color string). Defaults to '#000000' */
+  penColor?: string;
 }
 
 // ─── Webview style injected into the signature canvas ────────────────────────
@@ -46,7 +50,7 @@ const webStyle = `
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
-  ({ onSave, onEmpty }, ref) => {
+  ({ onSave, onEmpty, penColor = '#000000' }, ref) => {
     const sigRef = useRef<any>(null);
 
     useImperativeHandle(ref, () => ({
@@ -56,7 +60,20 @@ const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
       readSignature: () => {
         sigRef.current?.readSignature();
       },
+      setEraserMode: (active: boolean) => {
+        const color = active ? '#fafafa' : '#000000';
+        sigRef.current?.injectJavaScript(
+          `window.signaturePad && (window.signaturePad.penColor = '${color}'); true;`
+        );
+      },
     }));
+
+    // Inject JS to update pen color whenever the penColor prop changes
+    useEffect(() => {
+      sigRef.current?.injectJavaScript(
+        `window.signaturePad && (window.signaturePad.penColor = '${penColor}'); true;`
+      );
+    }, [penColor]);
 
     const handleBegin = () => {
       // Drawing started — nothing needed here

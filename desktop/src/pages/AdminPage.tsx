@@ -20,6 +20,9 @@ import {
   UserAddOutlined,
   SaveOutlined,
   LinkOutlined,
+  PictureOutlined,
+  DeleteOutlined,
+  UploadOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { Employe } from '../services/api'
@@ -30,6 +33,8 @@ import {
   deleteEmploye,
   getApiUrl,
   setApiUrl,
+  getSetting,
+  setSetting,
 } from '../services/api'
 import { isApiConfigured } from '../store/settings'
 
@@ -50,8 +55,16 @@ const AdminPage: React.FC = () => {
   const [apiUrlInput, setApiUrlInput] = useState(getApiUrl())
   const [apiUrlSaved, setApiUrlSaved] = useState(false)
 
+  // Logo setting
+  const [logoBase64, setLogoBase64] = useState<string | null>(null)
+  const [logoLoading, setLogoLoading] = useState(false)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+
   useEffect(() => {
     loadEmployes()
+    getSetting('logo').then(val => {
+      if (val) { setLogoBase64(val); setLogoPreview(val) }
+    })
   }, [])
 
   async function loadEmployes() {
@@ -148,6 +161,45 @@ const AdminPage: React.FC = () => {
       setApiUrlSaved(false)
       loadEmployes()
     }, 1500)
+  }
+
+  function handleLogoFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      const base64 = reader.result as string
+      setLogoPreview(base64)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  async function handleLogoSave() {
+    if (!logoPreview) return
+    setLogoLoading(true)
+    try {
+      await setSetting('logo', logoPreview)
+      setLogoBase64(logoPreview)
+      message.success('Logo sauvegardé')
+    } catch {
+      message.error('Erreur lors de la sauvegarde du logo')
+    } finally {
+      setLogoLoading(false)
+    }
+  }
+
+  async function handleLogoDelete() {
+    setLogoLoading(true)
+    try {
+      await setSetting('logo', '')
+      setLogoBase64(null)
+      setLogoPreview(null)
+      message.success('Logo supprimé')
+    } catch {
+      message.error('Erreur lors de la suppression')
+    } finally {
+      setLogoLoading(false)
+    }
   }
 
   const columns: ColumnsType<EditableEmploye> = [
@@ -274,6 +326,66 @@ const AdminPage: React.FC = () => {
           size="small"
           locale={{ emptyText: 'Aucun employé enregistré' }}
         />
+      </Card>
+
+      <Card
+        title={<Space><PictureOutlined />Logo tablette</Space>}
+        style={{ marginBottom: 24 }}
+      >
+        <Row gutter={24} align="middle">
+          <Col flex="200px">
+            <div style={{
+              width: 180, height: 100, border: '2px dashed #d9d9d9',
+              borderRadius: 8, display: 'flex', alignItems: 'center',
+              justifyContent: 'center', background: '#fafafa', overflow: 'hidden'
+            }}>
+              {logoPreview
+                ? <img src={logoPreview} alt="logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                : <Text type="secondary" style={{ fontSize: 12, textAlign: 'center' }}>Aucun logo{'\n'}(affiche "TicketPro")</Text>
+              }
+            </div>
+          </Col>
+          <Col flex="auto">
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                Format recommandé : PNG transparent, 400×200px max. Le logo s'affichera sur la tablette en haut à gauche.
+              </Text>
+              <Space>
+                <label htmlFor="logo-upload">
+                  <Button icon={<UploadOutlined />} onClick={() => document.getElementById('logo-upload')?.click()}>
+                    Choisir une image
+                  </Button>
+                </label>
+                <input
+                  id="logo-upload"
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleLogoFileChange}
+                />
+                <Button
+                  type="primary"
+                  icon={<SaveOutlined />}
+                  onClick={handleLogoSave}
+                  loading={logoLoading}
+                  disabled={!logoPreview || logoPreview === logoBase64}
+                >
+                  Enregistrer
+                </Button>
+                {logoBase64 && (
+                  <Popconfirm
+                    title="Supprimer le logo ?"
+                    onConfirm={handleLogoDelete}
+                    okText="Supprimer"
+                    cancelText="Annuler"
+                  >
+                    <Button danger icon={<DeleteOutlined />}>Supprimer</Button>
+                  </Popconfirm>
+                )}
+              </Space>
+            </Space>
+          </Col>
+        </Row>
       </Card>
 
       <Divider />

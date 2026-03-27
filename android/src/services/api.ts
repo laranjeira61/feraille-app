@@ -84,3 +84,17 @@ export async function getApiUrl(): Promise<string> {
 export async function saveApiUrl(url: string): Promise<void> {
   await AsyncStorage.setItem(API_URL_KEY, url.trim());
 }
+
+/**
+ * Fetches a setting value by key from GET /api/settings/:key
+ * Returns the value string, or null if not found or on error.
+ */
+export async function getSetting(key: string): Promise<string | null> {
+  try {
+    const client = await getClient()
+    const response = await client.get<{ key: string; value: string }>(`/api/settings/${key}`)
+    return response.data.value || null
+  } catch {
+    return null
+  }
+}
