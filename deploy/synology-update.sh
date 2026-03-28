@@ -6,6 +6,9 @@
 
 set -e
 
+# Add Synology Docker binary paths to PATH
+export PATH=$PATH:/usr/local/bin:/usr/bin:/bin:/usr/syno/bin
+
 APP_DIR="/volume1/docker/feraille-app/backend"
 LOG_FILE="/volume1/docker/feraille-app/deploy/update.log"
 
