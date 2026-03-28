@@ -24,7 +24,7 @@ git pull origin main
 
 # Reconstruire et redémarrer le conteneur Docker
 log "Rebuild du conteneur Docker..."
-docker-compose up --build -d
+docker compose up --build -d
 
 # Attendre que le conteneur soit healthy
 log "Attente du démarrage..."
