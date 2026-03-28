@@ -7,9 +7,16 @@
     "platforms": [
       "android"
     ],
+    "plugins": [
+      ["expo-build-properties", {
+        "android": {
+          "usesCleartextTraffic": true
+        }
+      }]
+    ],
     "android": {
       "package": "com.feraille.app",
-      "versionCode": 3,
+      "versionCode": 4,
       "permissions": [],
       "usesCleartextTraffic": true
     },

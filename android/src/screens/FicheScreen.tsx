@@ -410,9 +410,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
 
-  // ── Form panel (left ~27%) ───────────────────────────────────────────────
+  // ── Form panel (left ~28%) ───────────────────────────────────────────────
   formPanel: {
-    width: '27%',
+    flex: 28,
     backgroundColor: '#ffffff',
     borderRightWidth: 1,
     borderRightColor: '#e0e0e0',
@@ -504,9 +504,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // ── Canvas panel (right ~60%) ────────────────────────────────────────────
+  // ── Canvas panel (right ~72%) ────────────────────────────────────────────
   canvasPanel: {
-    flex: 1,
+    flex: 72,
     backgroundColor: '#f7f8fa',
     padding: 20,
     flexDirection: 'column',
