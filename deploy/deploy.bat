@@ -4,8 +4,8 @@
 :: Modifier les variables ci-dessous selon votre configuration
 :: ============================================================
 
-set SYNOLOGY_USER=admin
-set SYNOLOGY_HOST=192.168.1.x
+set SYNOLOGY_USER=cedric
+set SYNOLOGY_HOST=192.168.10.11
 set SYNOLOGY_SCRIPT=/volume1/docker/feraille-app/deploy/synology-update.sh
 
 echo =============================================
