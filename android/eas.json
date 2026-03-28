@@ -9,10 +9,5 @@
       "android": { "buildType": "apk" },
       "channel": "production"
     }
-  },
-  "update": {
-    "preview": {
-      "channel": "preview"
-    }
   }
 }
