@@ -410,9 +410,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
 
-  // ── Form panel (left ~32%) ───────────────────────────────────────────────
+  // ── Form panel (left ~27%) ───────────────────────────────────────────────
   formPanel: {
-    width: '32%',
+    width: '27%',
     backgroundColor: '#ffffff',
     borderRightWidth: 1,
     borderRightColor: '#e0e0e0',

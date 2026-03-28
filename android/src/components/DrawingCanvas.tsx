@@ -1,5 +1,5 @@
-import React, { useRef, forwardRef, useImperativeHandle } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useRef, forwardRef, useImperativeHandle, useState } from 'react';
+import { View, StyleSheet, LayoutChangeEvent } from 'react-native';
 import SignatureCanvas from 'react-native-signature-canvas';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -48,6 +48,7 @@ const webStyle = `
 const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
   ({ onSave, onEmpty }, ref) => {
     const sigRef = useRef<any>(null);
+    const [canvasHeight, setCanvasHeight] = useState(0);
 
     useImperativeHandle(ref, () => ({
       clear: () => {
@@ -57,6 +58,10 @@ const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
         sigRef.current?.readSignature();
       },
     }));
+
+    const handleLayout = (e: LayoutChangeEvent) => {
+      setCanvasHeight(e.nativeEvent.layout.height);
+    };
 
     const handleBegin = () => {
       // Drawing started — nothing needed here
@@ -77,23 +82,24 @@ const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
     };
 
     return (
-      <View style={styles.container}>
-        <SignatureCanvas
-          ref={sigRef}
-          onBegin={handleBegin}
-          onEnd={handleEnd}
-          onOK={handleOK}
-          onEmpty={handleEmpty}
-          webStyle={webStyle}
-          backgroundColor="rgba(250,250,250,1)"
-          penColor="#1a1a2e"
-          minWidth={2}
-          maxWidth={5}
-          // Prevent scroll bounce interfering with drawing
-          scrollable={false}
-          // Auto-read on every stroke end is handled in onEnd
-          autoClear={false}
-        />
+      <View style={styles.container} onLayout={handleLayout}>
+        {canvasHeight > 0 && (
+          <SignatureCanvas
+            ref={sigRef}
+            onBegin={handleBegin}
+            onEnd={handleEnd}
+            onOK={handleOK}
+            onEmpty={handleEmpty}
+            webStyle={webStyle}
+            backgroundColor="rgba(250,250,250,1)"
+            penColor="#1a1a2e"
+            minWidth={2}
+            maxWidth={5}
+            scrollable={false}
+            autoClear={false}
+            style={{ width: '100%', height: canvasHeight }}
+          />
+        )}
       </View>
     );
   }

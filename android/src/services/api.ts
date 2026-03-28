@@ -30,9 +30,13 @@ let _client: AxiosInstance | null = null;
  * Always rebuilds from AsyncStorage so settings changes take effect immediately.
  */
 export async function getClient(): Promise<AxiosInstance> {
-  const baseURL = (await AsyncStorage.getItem(API_URL_KEY)) ?? '';
+  let baseURL = (await AsyncStorage.getItem(API_URL_KEY)) ?? '';
+  baseURL = baseURL.trim();
+  if (baseURL && !baseURL.startsWith('http://') && !baseURL.startsWith('https://')) {
+    baseURL = 'http://' + baseURL;
+  }
   _client = axios.create({
-    baseURL: baseURL.trim(),
+    baseURL,
     timeout: 10_000,
     headers: {
       'Content-Type': 'application/json',
