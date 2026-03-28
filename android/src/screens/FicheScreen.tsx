@@ -31,6 +31,9 @@ const FicheScreen: React.FC = () => {
   const canvasRef = useRef<DrawingCanvasRef>(null);
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const currentPageRef = useRef(0);
+  // Stable initial dataURL — only updates on page change, not on every stroke save
+  const canvasInitialDataRef = useRef('');
+  const lastKnownPageRef = useRef(-1);
 
   // ── Clock state ────────────────────────────────────────────────────────────
   const [currentTime, setCurrentTime] = useState<string>(formatTime());
@@ -154,6 +157,7 @@ const FicheScreen: React.FC = () => {
     setSubmitting(true);
     try {
       await createFiche({
+        date: new Date().toISOString().split('T')[0],
         employe_id: selectedEmploye.id,
         employe_nom: selectedEmploye.nom,
         client: client.trim(),
@@ -184,6 +188,12 @@ const FicheScreen: React.FC = () => {
   };
 
   const isLastPage = currentPage === drawingPages.length - 1;
+
+  // Synchronously update canvasInitialDataRef when page changes (not during drawing)
+  if (lastKnownPageRef.current !== currentPage) {
+    lastKnownPageRef.current = currentPage;
+    canvasInitialDataRef.current = drawingPages[currentPage] || '';
+  }
 
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -358,7 +368,7 @@ const FicheScreen: React.FC = () => {
               ref={canvasRef}
               onSave={handleCanvasSave}
               onEmpty={handleCanvasEmpty}
-              dataURL={drawingPages[currentPage]}
+              dataURL={canvasInitialDataRef.current}
             />
           ) : (
             /* Previous pages: read-only image */

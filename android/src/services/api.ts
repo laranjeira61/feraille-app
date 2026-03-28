@@ -9,10 +9,11 @@ export interface Employe {
 }
 
 export interface FicheData {
+  date: string;
   employe_id: number;
   employe_nom: string;
   client: string;
-  /** Base64 PNG data URI of the drawing canvas */
+  /** JSON array of base64 PNG data URIs (one per drawing page) */
   notes_dessin: string;
   source: string;
 }
