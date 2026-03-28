@@ -136,47 +136,50 @@ function drawFicheCard(doc, fiche, yStart) {
     doc.rect(margin, notesStartY - 4, cardWidth, y - notesStartY + 4).stroke(COLORS.midGray);
   }
 
-  // Drawing / image section
+  // Drawing / image section — supports single base64 and multi-page JSON array
   if (fiche.notes_dessin) {
+    let pages = [];
     try {
-      let imageBuffer = null;
+      const parsed = JSON.parse(fiche.notes_dessin);
+      if (Array.isArray(parsed)) {
+        pages = parsed.filter(p => typeof p === 'string' && p.length > 0);
+      } else {
+        pages = [fiche.notes_dessin];
+      }
+    } catch {
+      pages = [fiche.notes_dessin];
+    }
 
-      if (typeof fiche.notes_dessin === 'string' && fiche.notes_dessin.startsWith('data:')) {
-        // data URL: data:image/png;base64,<data>
-        const commaIndex = fiche.notes_dessin.indexOf(',');
-        if (commaIndex !== -1) {
-          const base64Data = fiche.notes_dessin.substring(commaIndex + 1);
-          imageBuffer = Buffer.from(base64Data, 'base64');
+    for (let pi = 0; pi < pages.length; pi++) {
+      try {
+        let imageBuffer = null;
+        const pageData = pages[pi];
+
+        if (pageData.startsWith('data:')) {
+          const commaIndex = pageData.indexOf(',');
+          if (commaIndex !== -1) {
+            imageBuffer = Buffer.from(pageData.substring(commaIndex + 1), 'base64');
+          }
+        } else {
+          imageBuffer = Buffer.from(pageData, 'base64');
         }
-      } else if (typeof fiche.notes_dessin === 'string') {
-        // raw base64
-        imageBuffer = Buffer.from(fiche.notes_dessin, 'base64');
+
+        if (imageBuffer && imageBuffer.length > 0) {
+          const label = pages.length > 1 ? `Dessin / Croquis — Page ${pi + 1}/${pages.length}` : 'Dessin / Croquis';
+          doc.rect(margin, y, cardWidth, 14).fill(COLORS.midGray);
+          doc.fillColor(COLORS.darkGray).fontSize(9).font('Helvetica-Bold').text(label, margin + 10, y + 3);
+          y += 18;
+
+          const maxImgWidth = cardWidth - 20;
+          const maxImgHeight = 200;
+          doc.image(imageBuffer, margin + 10, y, { fit: [maxImgWidth, maxImgHeight], align: 'center' });
+          y += maxImgHeight + 10;
+        }
+      } catch (imgErr) {
+        console.warn(`Could not embed image page ${pi} for fiche #${fiche.id}:`, imgErr.message);
+        doc.fillColor(COLORS.accent).fontSize(8).text('[Dessin non lisible]', margin + 10, y);
+        y += 14;
       }
-
-      if (imageBuffer && imageBuffer.length > 0) {
-        // Section header
-        doc.rect(margin, y, cardWidth, 14).fill(COLORS.midGray);
-        doc.fillColor(COLORS.darkGray).fontSize(9).font('Helvetica-Bold')
-           .text('Dessin / Croquis', margin + 10, y + 3);
-        y += 18;
-
-        // Image max dimensions
-        const maxImgWidth = cardWidth - 20;
-        const maxImgHeight = 200;
-
-        // Embed image
-        doc.image(imageBuffer, margin + 10, y, {
-          fit: [maxImgWidth, maxImgHeight],
-          align: 'center',
-        });
-
-        y += maxImgHeight + 10;
-      }
-    } catch (imgErr) {
-      console.warn(`Could not embed image for fiche #${fiche.id}:`, imgErr.message);
-      doc.fillColor(COLORS.accent).fontSize(8)
-         .text('[Dessin non lisible]', margin + 10, y);
-      y += 14;
     }
   }
 

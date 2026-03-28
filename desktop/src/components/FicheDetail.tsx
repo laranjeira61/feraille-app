@@ -30,6 +30,16 @@ interface FicheDetailProps {
   onUpdated: () => void
 }
 
+/** Parse notes_dessin — supports both old single base64 and new JSON array format */
+function parseDrawingPages(notesDessin: string | null | undefined): string[] {
+  if (!notesDessin) return []
+  try {
+    const parsed = JSON.parse(notesDessin)
+    if (Array.isArray(parsed)) return parsed.filter((p: unknown) => typeof p === 'string' && p.length > 0)
+  } catch { /* not JSON — old format */ }
+  return [notesDessin]
+}
+
 const FicheDetail: React.FC<FicheDetailProps> = ({ ficheId, open, onClose, onUpdated }) => {
   const [fiche, setFiche] = useState<Fiche | null>(null)
   const [loading, setLoading] = useState(false)
@@ -38,6 +48,7 @@ const FicheDetail: React.FC<FicheDetailProps> = ({ ficheId, open, onClose, onUpd
   const [error, setError] = useState<string | null>(null)
   const [newStatut, setNewStatut] = useState<StatutFiche>('EN_ATTENTE')
   const [commentaire, setCommentaire] = useState('')
+  const [drawingPageIdx, setDrawingPageIdx] = useState(0)
 
   useEffect(() => {
     if (open && ficheId !== null) {
@@ -53,6 +64,7 @@ const FicheDetail: React.FC<FicheDetailProps> = ({ ficheId, open, onClose, onUpd
       setFiche(data)
       setNewStatut(data.statut)
       setCommentaire(data.commentaire_secretaire || '')
+      setDrawingPageIdx(0)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erreur lors du chargement de la fiche'
       setError(msg)
@@ -176,33 +188,33 @@ const FicheDetail: React.FC<FicheDetailProps> = ({ ficheId, open, onClose, onUpd
             </Descriptions.Item>
           </Descriptions>
 
-          {/* Drawing image */}
-          {fiche.notes_dessin && (
-            <>
-              <Title level={5} style={{ marginBottom: 8 }}>Dessin / Notes visuelles</Title>
-              <div
-                style={{
-                  border: '1px solid #d9d9d9',
-                  borderRadius: 6,
-                  padding: 8,
-                  marginBottom: 16,
-                  background: '#fafafa',
-                  textAlign: 'center',
-                }}
-              >
-                <img
-                  src={fiche.notes_dessin}
-                  alt="Dessin de la fiche"
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: 400,
-                    objectFit: 'contain',
-                    borderRadius: 4,
-                  }}
-                />
-              </div>
-            </>
-          )}
+          {/* Drawing pages */}
+          {(() => {
+            const pages = parseDrawingPages(fiche.notes_dessin)
+            if (pages.length === 0) return null
+            const idx = Math.min(drawingPageIdx, pages.length - 1)
+            return (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8, gap: 8 }}>
+                  <Title level={5} style={{ margin: 0 }}>Dessin / Notes visuelles</Title>
+                  {pages.length > 1 && (
+                    <Space>
+                      <Button size="small" disabled={idx === 0} onClick={() => setDrawingPageIdx(i => Math.max(0, i - 1))}>‹</Button>
+                      <Text style={{ fontSize: 13 }}>Page {idx + 1} / {pages.length}</Text>
+                      <Button size="small" disabled={idx === pages.length - 1} onClick={() => setDrawingPageIdx(i => Math.min(pages.length - 1, i + 1))}>›</Button>
+                    </Space>
+                  )}
+                </div>
+                <div style={{ border: '1px solid #d9d9d9', borderRadius: 6, padding: 8, marginBottom: 16, background: '#fafafa', textAlign: 'center' }}>
+                  <img
+                    src={pages[idx]}
+                    alt={`Dessin page ${idx + 1}`}
+                    style={{ maxWidth: '100%', maxHeight: 400, objectFit: 'contain', borderRadius: 4 }}
+                  />
+                </div>
+              </>
+            )
+          })()}
 
           {/* Text notes */}
           {fiche.notes_texte && (
