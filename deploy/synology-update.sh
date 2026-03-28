@@ -6,9 +6,7 @@
 
 set -e
 
-# Add Synology Docker binary paths to PATH
-export PATH=$PATH:/usr/local/bin:/usr/bin:/bin:/usr/syno/bin
-
+DOCKER=/usr/local/bin/docker
 APP_DIR="/volume1/docker/feraille-app/backend"
 LOG_FILE="/volume1/docker/feraille-app/deploy/update.log"
 
@@ -27,14 +25,14 @@ git pull origin main
 
 # Reconstruire et redémarrer le conteneur Docker
 log "Rebuild du conteneur Docker..."
-docker compose up --build -d
+$DOCKER compose up --build -d
 
 # Attendre que le conteneur soit healthy
 log "Attente du démarrage..."
 sleep 10
 
 # Vérifier que l'API répond
-HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health || echo "000")
+HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health 2>/dev/null || echo "000")
 if [ "$HTTP_STATUS" = "200" ]; then
   log "✓ API opérationnelle (HTTP $HTTP_STATUS)"
 else
