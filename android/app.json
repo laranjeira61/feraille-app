@@ -9,7 +9,7 @@
     ],
     "android": {
       "package": "com.feraille.app",
-      "versionCode": 2,
+      "versionCode": 3,
       "permissions": [],
       "usesCleartextTraffic": true
     },

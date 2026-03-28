@@ -19,26 +19,39 @@ interface DrawingCanvasProps {
 }
 
 // ─── Webview style injected into the signature canvas ────────────────────────
+// Force the HTML canvas to fill the entire WebView viewport.
+// Without this, the drawable area only covers the top ~40% of the view.
 
 const webStyle = `
+  html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #fafafa;
+  }
   .m-signature-pad {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
     box-shadow: none;
     border: none;
     background: #fafafa;
+    width: 100%;
+    height: 100%;
   }
   .m-signature-pad--body {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
     border: none;
     background: #fafafa;
   }
   .m-signature-pad--footer {
     display: none;
   }
-  body {
-    background: #fafafa;
-    margin: 0;
-    padding: 0;
-  }
   canvas {
+    width: 100% !important;
+    height: 100% !important;
     background: #fafafa !important;
   }
 `;
@@ -83,23 +96,21 @@ const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
 
     return (
       <View style={styles.container} onLayout={handleLayout}>
-        {canvasHeight > 0 && (
-          <SignatureCanvas
-            ref={sigRef}
-            onBegin={handleBegin}
-            onEnd={handleEnd}
-            onOK={handleOK}
-            onEmpty={handleEmpty}
-            webStyle={webStyle}
-            backgroundColor="rgba(250,250,250,1)"
-            penColor="#1a1a2e"
-            minWidth={2}
-            maxWidth={5}
-            scrollable={false}
-            autoClear={false}
-            style={{ width: '100%', height: canvasHeight }}
-          />
-        )}
+        <SignatureCanvas
+          ref={sigRef}
+          onBegin={handleBegin}
+          onEnd={handleEnd}
+          onOK={handleOK}
+          onEmpty={handleEmpty}
+          webStyle={webStyle}
+          backgroundColor="rgba(250,250,250,1)"
+          penColor="#1a1a2e"
+          minWidth={2}
+          maxWidth={5}
+          scrollable={false}
+          autoClear={false}
+          style={canvasHeight > 0 ? { height: canvasHeight } : { flex: 1 }}
+        />
       </View>
     );
   }

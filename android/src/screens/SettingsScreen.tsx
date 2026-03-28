@@ -74,8 +74,8 @@ const SettingsScreen: React.FC = () => {
         message: `Connexion réussie — version API : ${version}`,
       });
     } catch (err: any) {
-      const msg =
-        err?.message ?? 'Impossible de joindre le serveur.';
+      const url = apiUrl.trim().startsWith('http') ? apiUrl.trim() : 'http://' + apiUrl.trim();
+      const msg = (err?.message ?? 'Impossible de joindre le serveur.') + `\n→ URL testée : ${url}/api/version`;
       setTestResult({ ok: false, message: msg });
     } finally {
       setTesting(false);
