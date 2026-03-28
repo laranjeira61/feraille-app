@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  Image,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -29,10 +30,11 @@ const FicheScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const canvasRef = useRef<DrawingCanvasRef>(null);
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const currentPageRef = useRef(0);
 
   // ── Clock state ────────────────────────────────────────────────────────────
   const [currentTime, setCurrentTime] = useState<string>(formatTime());
-  const today = formatDateLong(); // static — won't change during session
+  const today = formatDateLong();
 
   // ── API & employees state ──────────────────────────────────────────────────
   const [employes, setEmployes] = useState<Employe[]>([]);
@@ -43,8 +45,10 @@ const FicheScreen: React.FC = () => {
   // ── Form state ─────────────────────────────────────────────────────────────
   const [selectedEmploye, setSelectedEmploye] = useState<Employe | null>(null);
   const [client, setClient] = useState('');
-  const [drawingData, setDrawingData] = useState<string>('');
 
+  // ── Drawing pages ──────────────────────────────────────────────────────────
+  const [drawingPages, setDrawingPages] = useState<string[]>(['']);
+  const [currentPage, setCurrentPage] = useState(0);
 
   // ── Submission state ───────────────────────────────────────────────────────
   const [submitting, setSubmitting] = useState(false);
@@ -57,24 +61,19 @@ const FicheScreen: React.FC = () => {
 
   // ── Clock ticker ───────────────────────────────────────────────────────────
   useEffect(() => {
-    clockRef.current = setInterval(() => {
-      setCurrentTime(formatTime());
-    }, 1000);
-    return () => {
-      if (clockRef.current) clearInterval(clockRef.current);
-    };
+    clockRef.current = setInterval(() => setCurrentTime(formatTime()), 1000);
+    return () => { if (clockRef.current) clearInterval(clockRef.current); };
   }, []);
+
+  // Keep ref in sync with state (avoids stale closures in callbacks)
+  useEffect(() => { currentPageRef.current = currentPage; }, [currentPage]);
 
   // ── Check API config & load employees when screen is focused ───────────────
   useFocusEffect(
     useCallback(() => {
       const init = async () => {
         const url = await getApiUrl();
-        if (!url) {
-          setApiConfigured(false);
-          setErrorEmployes(true);
-          return;
-        }
+        if (!url) { setApiConfigured(false); setErrorEmployes(true); return; }
         setApiConfigured(true);
         loadEmployes();
       };
@@ -86,8 +85,7 @@ const FicheScreen: React.FC = () => {
     setLoadingEmployes(true);
     setErrorEmployes(false);
     try {
-      const data = await getEmployes();
-      setEmployes(data);
+      setEmployes(await getEmployes());
     } catch {
       setErrorEmployes(true);
     } finally {
@@ -95,21 +93,52 @@ const FicheScreen: React.FC = () => {
     }
   };
 
+  // ── Drawing page handlers ──────────────────────────────────────────────────
+
+  const handleCanvasSave = useCallback((data: string) => {
+    setDrawingPages(prev => {
+      const updated = [...prev];
+      updated[currentPageRef.current] = data;
+      return updated;
+    });
+  }, []);
+
+  const handleCanvasEmpty = useCallback(() => {
+    setDrawingPages(prev => {
+      const updated = [...prev];
+      updated[currentPageRef.current] = '';
+      return updated;
+    });
+  }, []);
+
+  const addPage = useCallback(() => {
+    setDrawingPages(prev => [...prev, '']);
+    setCurrentPage(prev => prev + 1);
+    // canvas remounts via key change — no need to call clear()
+  }, []);
+
+  const goToPrevPage = useCallback(() => {
+    setCurrentPage(prev => Math.max(0, prev - 1));
+  }, []);
+
+  const goToNextPage = useCallback(() => {
+    setCurrentPage(prev => prev + 1);
+  }, []);
+
   // ── Form reset ─────────────────────────────────────────────────────────────
   const resetForm = useCallback(() => {
     setSelectedEmploye(null);
     setClient('');
-    setDrawingData('');
+    setDrawingPages(['']);
+    setCurrentPage(0);
+    currentPageRef.current = 0;
     canvasRef.current?.clear();
   }, []);
 
   // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = useCallback(async () => {
     if (!apiConfigured) {
-      Alert.alert(
-        'API non configurée',
-        'Appuyez longuement sur "TicketPro" pour accéder aux paramètres.'
-      );
+      Alert.alert('API non configurée', 'Appuyez longuement sur "TicketPro" pour accéder aux paramètres.');
       return;
     }
     if (!selectedEmploye) {
@@ -121,56 +150,40 @@ const FicheScreen: React.FC = () => {
       return;
     }
 
-    // Trigger canvas read to get latest drawing
     canvasRef.current?.readSignature();
-
     setSubmitting(true);
     try {
       await createFiche({
         employe_id: selectedEmploye.id,
         employe_nom: selectedEmploye.nom,
         client: client.trim(),
-        notes_dessin: drawingData,
+        notes_dessin: JSON.stringify(drawingPages),
         source: 'TicketPro',
       });
 
-      // Success
       setModalType('success');
-      setModalMessage(
-        `Fiche pour ${client.trim()} enregistrée avec succès.`
-      );
+      setModalMessage(`Fiche pour ${client.trim()} enregistrée avec succès.`);
       setModalVisible(true);
-
-      // Auto-reset after 3 seconds
-      setTimeout(() => {
-        setModalVisible(false);
-        resetForm();
-      }, 3000);
+      setTimeout(() => { setModalVisible(false); resetForm(); }, 3000);
     } catch (err: any) {
-      const message =
-        err?.response?.data?.message ??
-        err?.message ??
-        'Une erreur est survenue. Vérifiez la connexion au serveur.';
+      const message = err?.response?.data?.message ?? err?.message ?? 'Une erreur est survenue.';
       setModalType('error');
       setModalMessage(message);
       setModalVisible(true);
     } finally {
       setSubmitting(false);
     }
-  }, [apiConfigured, selectedEmploye, client, drawingData, resetForm]);
+  }, [apiConfigured, selectedEmploye, client, drawingPages, resetForm]);
 
   // ── Title long-press handlers ──────────────────────────────────────────────
   const handleTitlePressIn = () => {
-    longPressTimer.current = setTimeout(() => {
-      navigation.navigate('Settings');
-    }, 2000);
+    longPressTimer.current = setTimeout(() => navigation.navigate('Settings'), 2000);
   };
   const handleTitlePressOut = () => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
+    if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; }
   };
+
+  const isLastPage = currentPage === drawingPages.length - 1;
 
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -179,10 +192,9 @@ const FicheScreen: React.FC = () => {
       <StatusBar style="light" hidden />
 
       {/* ════════════════════════════════════════════════════════════════════
-          HEADER BAR
+          HEADER
       ════════════════════════════════════════════════════════════════════ */}
       <View style={styles.header}>
-        {/* App title — long press opens Settings */}
         <TouchableOpacity
           onPressIn={handleTitlePressIn}
           onPressOut={handleTitlePressOut}
@@ -191,8 +203,6 @@ const FicheScreen: React.FC = () => {
         >
           <Text style={styles.headerTitle}>TicketPro</Text>
         </TouchableOpacity>
-
-        {/* Date & clock */}
         <View style={styles.headerRight}>
           <Text style={styles.headerDate}>{today}</Text>
           <Text style={styles.headerClock}>{currentTime}</Text>
@@ -206,8 +216,7 @@ const FicheScreen: React.FC = () => {
         <View style={styles.noBanner}>
           <Text style={styles.noBannerText}>
             ⚠️  API non configurée — appuyez longuement sur{' '}
-            <Text style={styles.noBannerBold}>TicketPro</Text> pour accéder aux
-            paramètres.
+            <Text style={styles.noBannerBold}>TicketPro</Text> pour accéder aux paramètres.
           </Text>
         </View>
       )}
@@ -216,108 +225,160 @@ const FicheScreen: React.FC = () => {
           MAIN CONTENT  (Left form  +  Right canvas)
       ════════════════════════════════════════════════════════════════════ */}
       <View style={styles.content}>
-        {/* ── LEFT: Form ─────────────────────────────────────────────────── */}
-        <ScrollView
-          style={styles.formPanel}
-          contentContainerStyle={styles.formPanelContent}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Employee */}
-          <Text style={styles.fieldLabel}>Employé</Text>
-          <EmployeePicker
-            employes={employes}
-            selectedId={selectedEmploye?.id ?? null}
-            onSelect={setSelectedEmploye}
-            loading={loadingEmployes}
-            error={errorEmployes}
-          />
 
-          {/* Reload employees button */}
-          {errorEmployes && apiConfigured && (
-            <TouchableOpacity
-              style={styles.retryButton}
-              onPress={loadEmployes}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.retryButtonText}>↻  Recharger les employés</Text>
-            </TouchableOpacity>
-          )}
-
-          <View style={styles.fieldSpacer} />
-
-          {/* Client */}
-          <Text style={styles.fieldLabel}>Client</Text>
-          <TextInput
-            style={styles.clientInput}
-            value={client}
-            onChangeText={setClient}
-            placeholder="Nom du client…"
-            placeholderTextColor="#bbb"
-            autoCapitalize="words"
-            returnKeyType="done"
-          />
-
-          <View style={styles.formButtonsSpacer} />
-
-          {/* Submit button */}
-          <TouchableOpacity
-            style={[
-              styles.submitButton,
-              submitting && styles.submitButtonDisabled,
-            ]}
-            onPress={handleSubmit}
-            disabled={submitting}
-            activeOpacity={0.85}
+        {/* ── LEFT: Form panel ─────────────────────────────────────────── */}
+        {/* Outer View handles flex sizing; ScrollView fills it */}
+        <View style={styles.formPanelWrapper}>
+          <ScrollView
+            style={styles.formPanel}
+            contentContainerStyle={styles.formPanelContent}
+            keyboardShouldPersistTaps="handled"
           >
-            {submitting ? (
-              <ActivityIndicator color="#fff" size="large" />
-            ) : (
-              <Text style={styles.submitButtonText}>ENVOYER LA FICHE</Text>
+            {/* Employee */}
+            <Text style={styles.fieldLabel}>Employé</Text>
+            <EmployeePicker
+              employes={employes}
+              selectedId={selectedEmploye?.id ?? null}
+              onSelect={setSelectedEmploye}
+              loading={loadingEmployes}
+              error={errorEmployes}
+            />
+
+            {errorEmployes && apiConfigured && (
+              <TouchableOpacity style={styles.retryButton} onPress={loadEmployes} activeOpacity={0.8}>
+                <Text style={styles.retryButtonText}>↻  Recharger les employés</Text>
+              </TouchableOpacity>
             )}
-          </TouchableOpacity>
 
-          <View style={styles.fieldSpacer} />
+            <View style={styles.fieldSpacer} />
 
-          {/* New fiche / reset button */}
-          <TouchableOpacity
-            style={styles.resetButton}
-            onPress={() => {
-              Alert.alert(
-                'Nouvelle fiche',
-                'Effacer le formulaire et recommencer ?',
-                [
+            {/* Client */}
+            <Text style={styles.fieldLabel}>Client</Text>
+            <TextInput
+              style={styles.clientInput}
+              value={client}
+              onChangeText={setClient}
+              placeholder="Nom du client…"
+              placeholderTextColor="#bbb"
+              autoCapitalize="words"
+              returnKeyType="done"
+            />
+
+            <View style={styles.formButtonsSpacer} />
+
+            {/* Submit */}
+            <TouchableOpacity
+              style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+              onPress={handleSubmit}
+              disabled={submitting}
+              activeOpacity={0.85}
+            >
+              {submitting ? (
+                <ActivityIndicator color="#fff" size="large" />
+              ) : (
+                <Text style={styles.submitButtonText}>ENVOYER LA FICHE</Text>
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.fieldSpacer} />
+
+            {/* Reset */}
+            <TouchableOpacity
+              style={styles.resetButton}
+              onPress={() => {
+                Alert.alert('Nouvelle fiche', 'Effacer le formulaire et recommencer ?', [
                   { text: 'Annuler', style: 'cancel' },
                   { text: 'Effacer', style: 'destructive', onPress: resetForm },
-                ]
-              );
-            }}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.resetButtonText}>Nouvelle fiche</Text>
-          </TouchableOpacity>
-        </ScrollView>
-
-        {/* ── RIGHT: Drawing canvas ────────────────────────────────────── */}
-        <View style={styles.canvasPanel}>
-          <View style={styles.canvasHeader}>
-            <Text style={styles.fieldLabel}>Notes (écrire au doigt)</Text>
-            <TouchableOpacity
-              style={styles.clearButton}
-              onPress={() => {
-                canvasRef.current?.clear();
-                setDrawingData('');
+                ]);
               }}
               activeOpacity={0.8}
             >
-              <Text style={styles.clearButtonText}>Effacer tout</Text>
+              <Text style={styles.resetButtonText}>Nouvelle fiche</Text>
             </TouchableOpacity>
+          </ScrollView>
+        </View>
+
+        {/* ── RIGHT: Drawing canvas ────────────────────────────────────── */}
+        <View style={styles.canvasPanel}>
+
+          {/* Canvas header: label + controls */}
+          <View style={styles.canvasHeader}>
+            <Text style={styles.fieldLabel}>Notes (écrire au doigt)</Text>
+
+            <View style={styles.canvasControls}>
+              {/* Page navigation — only shown when > 1 page */}
+              {drawingPages.length > 1 && (
+                <>
+                  <TouchableOpacity
+                    style={[styles.pageNavBtn, currentPage === 0 && styles.pageNavBtnDisabled]}
+                    onPress={goToPrevPage}
+                    disabled={currentPage === 0}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.pageNavText}>‹</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.pageLabel}>
+                    Page {currentPage + 1} / {drawingPages.length}
+                  </Text>
+                  <TouchableOpacity
+                    style={[styles.pageNavBtn, isLastPage && styles.pageNavBtnDisabled]}
+                    onPress={goToNextPage}
+                    disabled={isLastPage}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.pageNavText}>›</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+
+              {/* Add page — only on active last page */}
+              {isLastPage && (
+                <TouchableOpacity style={styles.addPageBtn} onPress={addPage} activeOpacity={0.8}>
+                  <Text style={styles.addPageBtnText}>+ Page</Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Clear — only on active last page */}
+              {isLastPage && (
+                <TouchableOpacity
+                  style={styles.clearButton}
+                  onPress={() => { canvasRef.current?.clear(); handleCanvasEmpty(); }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.clearButtonText}>Effacer</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
-          <DrawingCanvas
-            ref={canvasRef}
-            onSave={(data) => setDrawingData(data)}
-            onEmpty={() => setDrawingData('')}
-          />
+          {/* Active last page: editable canvas */}
+          {isLastPage ? (
+            <DrawingCanvas
+              key={`canvas-page-${currentPage}`}
+              ref={canvasRef}
+              onSave={handleCanvasSave}
+              onEmpty={handleCanvasEmpty}
+              dataURL={drawingPages[currentPage]}
+            />
+          ) : (
+            /* Previous pages: read-only image */
+            <View style={styles.savedPageContainer}>
+              {drawingPages[currentPage] ? (
+                <Image
+                  source={{ uri: drawingPages[currentPage] }}
+                  style={styles.savedPageImage}
+                  resizeMode="contain"
+                />
+              ) : (
+                <Text style={styles.emptyPageText}>Page vide</Text>
+              )}
+              <View style={styles.readOnlyBadge}>
+                <Text style={styles.readOnlyText}>
+                  Lecture seule — appuyez sur › pour revenir au dessin
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
       </View>
 
@@ -366,14 +427,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 4,
   },
-  headerLogo: {
-    height: 44,
-    width: 160,
-    resizeMode: 'contain',
-  },
-  headerRight: {
-    alignItems: 'flex-end',
-  },
+  headerRight: { alignItems: 'flex-end' },
   headerDate: {
     color: '#c0c8e8',
     fontSize: 17,
@@ -396,13 +450,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
-  noBannerText: {
-    fontSize: 16,
-    color: '#856404',
-  },
-  noBannerBold: {
-    fontWeight: '700',
-  },
+  noBannerText: { fontSize: 16, color: '#856404' },
+  noBannerBold: { fontWeight: '700' },
 
   // ── Main layout ──────────────────────────────────────────────────────────
   content: {
@@ -410,9 +459,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
 
-  // ── Form panel (left ~28%) ───────────────────────────────────────────────
-  formPanel: {
+  // ── Form panel (left ~28%) — outer View handles flex; ScrollView fills ──
+  formPanelWrapper: {
     flex: 28,
+  },
+  formPanel: {
+    flex: 1,
     backgroundColor: '#ffffff',
     borderRightWidth: 1,
     borderRightColor: '#e0e0e0',
@@ -429,13 +481,8 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  fieldSpacer: {
-    height: 12,
-  },
-  formButtonsSpacer: {
-    flex: 1,
-    minHeight: 24,
-  },
+  fieldSpacer: { height: 12 },
+  formButtonsSpacer: { flex: 1, minHeight: 24 },
 
   clientInput: {
     borderWidth: 2,
@@ -448,7 +495,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fafafa',
     minHeight: 64,
   },
-
   retryButton: {
     marginTop: 10,
     paddingVertical: 10,
@@ -457,11 +503,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#e8eaf6',
     alignSelf: 'flex-start',
   },
-  retryButtonText: {
-    fontSize: 16,
-    color: '#1a1a2e',
-    fontWeight: '600',
-  },
+  retryButtonText: { fontSize: 16, color: '#1a1a2e', fontWeight: '600' },
 
   // Submit
   submitButton: {
@@ -476,11 +518,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
-  submitButtonDisabled: {
-    backgroundColor: '#81c784',
-    elevation: 0,
-    shadowOpacity: 0,
-  },
+  submitButtonDisabled: { backgroundColor: '#81c784', elevation: 0, shadowOpacity: 0 },
   submitButtonText: {
     color: '#ffffff',
     fontSize: 22,
@@ -498,11 +536,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#f5f5f5',
   },
-  resetButtonText: {
-    color: '#555',
-    fontSize: 18,
-    fontWeight: '600',
-  },
+  resetButtonText: { color: '#555', fontSize: 18, fontWeight: '600' },
 
   // ── Canvas panel (right ~72%) ────────────────────────────────────────────
   canvasPanel: {
@@ -517,6 +551,44 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 12,
   },
+  canvasControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+
+  // Page navigation buttons
+  pageNavBtn: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: '#1a1a2e',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pageNavBtnDisabled: { backgroundColor: '#ccc' },
+  pageNavText: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: '700',
+    lineHeight: 28,
+  },
+  pageLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    minWidth: 90,
+    textAlign: 'center',
+  },
+  addPageBtn: {
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#1565c0',
+  },
+  addPageBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+
+  // Clear button
   clearButton: {
     backgroundColor: '#c62828',
     borderRadius: 10,
@@ -526,9 +598,42 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  clearButtonText: {
-    color: '#ffffff',
-    fontSize: 17,
-    fontWeight: '700',
+  clearButtonText: { color: '#ffffff', fontSize: 17, fontWeight: '700' },
+
+  // Saved page (read-only)
+  savedPageContainer: {
+    flex: 1,
+    backgroundColor: '#fafafa',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#ddd',
+    overflow: 'hidden',
+  },
+  savedPageImage: {
+    flex: 1,
+    width: '100%',
+  },
+  emptyPageText: {
+    flex: 1,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    color: '#bbb',
+    fontSize: 18,
+  },
+  readOnlyBadge: {
+    position: 'absolute',
+    bottom: 12,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  readOnlyText: {
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    color: '#fff',
+    fontSize: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 6,
+    borderRadius: 20,
+    overflow: 'hidden',
   },
 });

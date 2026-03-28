@@ -16,6 +16,8 @@ interface DrawingCanvasProps {
   onSave: (dataUri: string) => void;
   /** Called when the canvas is cleared or empty */
   onEmpty?: () => void;
+  /** Pre-fill the canvas with an existing base64 PNG (used when returning to a saved page) */
+  dataURL?: string;
 }
 
 // ─── Webview style injected into the signature canvas ────────────────────────
@@ -59,7 +61,7 @@ const webStyle = `
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
-  ({ onSave, onEmpty }, ref) => {
+  ({ onSave, onEmpty, dataURL }, ref) => {
     const sigRef = useRef<any>(null);
     const [canvasHeight, setCanvasHeight] = useState(0);
 
@@ -109,6 +111,7 @@ const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
           maxWidth={5}
           scrollable={false}
           autoClear={false}
+          dataURL={dataURL ?? ''}
           style={canvasHeight > 0 ? { height: canvasHeight } : { flex: 1 }}
         />
       </View>
