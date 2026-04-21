@@ -120,6 +120,17 @@ const FicheTable: React.FC = () => {
 
   const columns: ColumnsType<Fiche> = [
     {
+      title: 'N°',
+      dataIndex: 'numero',
+      key: 'numero',
+      width: 110,
+      render: (numero: string | null, record) => (
+        <Text style={{ fontFamily: 'monospace', fontSize: 12 }}>
+          {numero ?? `#${record.id}`}
+        </Text>
+      ),
+    },
+    {
       title: 'Date',
       dataIndex: 'date',
       key: 'date',

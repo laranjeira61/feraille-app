@@ -142,7 +142,7 @@ const FicheDetail: React.FC<FicheDetailProps> = ({ ficheId, open, onClose, onUpd
     setDeleting(true)
     try {
       await deleteFiche(fiche.id)
-      message.success(`Fiche #${fiche.id} supprimée`)
+      message.success(`Fiche ${fiche.numero ?? `#${fiche.id}`} supprimée`)
       setDeleteModalOpen(false)
       onUpdated()
       onClose()
@@ -199,7 +199,7 @@ const FicheDetail: React.FC<FicheDetailProps> = ({ ficheId, open, onClose, onUpd
     <Modal
       title={
         fiche
-          ? `Fiche #${fiche.id} — ${formatDate(fiche.date)} — ${fiche.client}`
+          ? `Fiche ${fiche.numero ?? `#${fiche.id}`} — ${formatDate(fiche.date)} — ${fiche.client}`
           : 'Détail de la fiche'
       }
       open={open}

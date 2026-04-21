@@ -89,9 +89,20 @@ router.post('/', (req, res, next) => {
     const validTypes = ['FACTURE', 'PROJET'];
     const ficheType = validTypes.includes(type_fiche) ? type_fiche : 'FACTURE';
 
+    // Generate numero YYMMXXXX
+    const now = new Date();
+    const yy = String(now.getFullYear()).slice(-2);
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const prefix = yy + mm;
+    const lastRow = db.prepare(
+      "SELECT numero FROM fiches WHERE numero LIKE ? ORDER BY numero DESC LIMIT 1"
+    ).get(prefix + '%');
+    const seq = lastRow?.numero ? parseInt(lastRow.numero.slice(4), 10) + 1 : 1;
+    const numero = prefix + String(seq).padStart(4, '0');
+
     const stmt = db.prepare(`
-      INSERT INTO fiches (date, employe_id, employe_nom, client, notes_dessin, notes_texte, source, type_fiche)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO fiches (date, employe_id, employe_nom, client, notes_dessin, notes_texte, source, type_fiche, numero)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = stmt.run(
@@ -102,7 +113,8 @@ router.post('/', (req, res, next) => {
       notes_dessin || null,
       notes_texte || null,
       source || 'FERRAILLE',
-      ficheType
+      ficheType,
+      numero
     );
 
     const fiche = db.prepare('SELECT * FROM fiches WHERE id = ?').get(result.lastInsertRowid);

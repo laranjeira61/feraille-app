@@ -18,6 +18,7 @@ export interface Fiche {
   commentaire_secretaire: string | null
   source: SourceFiche
   type_fiche: TypeFiche
+  numero: string | null
   created_at: string
 }
 

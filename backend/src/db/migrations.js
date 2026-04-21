@@ -38,6 +38,13 @@ function runMigrations(db) {
     // Column already exists
   }
 
+  // Add numero column (YYMMXXXX format, generated on insert)
+  try {
+    db.exec("ALTER TABLE fiches ADD COLUMN numero TEXT");
+  } catch {
+    // Column already exists
+  }
+
   console.log('Database migrations applied successfully.');
 }
 
