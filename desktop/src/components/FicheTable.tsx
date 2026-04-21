@@ -22,7 +22,7 @@ import {
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { Dayjs } from 'dayjs'
 import type { Fiche, FicheFilters, StatutFiche, Employe } from '../services/api'
-import { getFiches, getEmployes } from '../services/api'
+import { getFiches, getEmployes, getSetting } from '../services/api'
 import StatusBadge from './StatusBadge'
 import FicheDetail from './FicheDetail'
 import ExportModal from './ExportModal'
@@ -49,7 +49,11 @@ const FicheTable: React.FC = () => {
 
   useEffect(() => {
     loadEmployes()
-    loadFiches()
+    getSetting('default_statut_filter').then(val => {
+      const defaultStatut = (val as StatutFiche | '') || ''
+      setStatut(defaultStatut)
+      loadFiches({ statut: defaultStatut || undefined })
+    }).catch(() => loadFiches())
     const interval = setInterval(() => loadFiches(), 30_000)
     return () => clearInterval(interval)
   }, [])

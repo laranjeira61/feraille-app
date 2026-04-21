@@ -4,6 +4,7 @@ import {
   Table,
   Button,
   Input,
+  Select,
   Space,
   Switch,
   Form,
@@ -23,6 +24,7 @@ import {
   PictureOutlined,
   DeleteOutlined,
   UploadOutlined,
+  EyeOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { Employe } from '../services/api'
@@ -94,6 +96,48 @@ function PinSetting() {
       <PinRow label="Code PIN accès Administration :" settingKey="admin_access_pin" defaultVal="0000" />
       <PinRow label="Code PIN suppression de fiche :" settingKey="delete_pin" defaultVal="1234" />
     </>
+  )
+}
+
+function DefaultViewSetting() {
+  const [value, setValue] = useState<string>('')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    getSetting('default_statut_filter').then(v => { if (v !== null) setValue(v) })
+  }, [])
+
+  async function handleChange(newVal: string) {
+    setSaving(true)
+    try {
+      await setSetting('default_statut_filter', newVal)
+      setValue(newVal)
+      message.success('Paramètre enregistré')
+    } catch {
+      message.error('Erreur lors de la sauvegarde')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Row gutter={8} align="middle">
+      <Col style={{ width: 260 }}>
+        <Text>Affichage par défaut des fiches :</Text>
+      </Col>
+      <Col>
+        <Select
+          value={value}
+          onChange={handleChange}
+          loading={saving}
+          style={{ width: 220 }}
+          options={[
+            { value: '', label: 'Tous les tickets' },
+            { value: 'EN_ATTENTE', label: 'En attente uniquement' },
+          ]}
+        />
+      </Col>
+    </Row>
   )
 }
 
@@ -501,7 +545,11 @@ const AdminPage: React.FC = () => {
         </Text>
       </Card>
 
-      <Card title="Sécurité — Code PIN suppression" style={{ marginTop: 24 }}>
+      <Card title={<Space><EyeOutlined />Affichage</Space>} style={{ marginTop: 24 }}>
+        <DefaultViewSetting />
+      </Card>
+
+      <Card title="Sécurité — Codes PIN" style={{ marginTop: 24 }}>
         <PinSetting />
       </Card>
     </div>
