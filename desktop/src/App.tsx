@@ -26,21 +26,16 @@ import AdminPage from './pages/AdminPage'
 import { getApiUrl, getSetting } from './services/api'
 import { isApiConfigured } from './store/settings'
 
-const ADMIN_SESSION_KEY = 'admin_unlocked'
-
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate()
   const [pinInput, setPinInput] = useState('')
   const [error, setError] = useState(false)
-  const [unlocked, setUnlocked] = useState(
-    sessionStorage.getItem(ADMIN_SESSION_KEY) === '1'
-  )
+  const [unlocked, setUnlocked] = useState(false)
 
   const handleUnlock = useCallback(async () => {
-    const stored = await getSetting('admin_pin')
-    const expected = stored || '1234'
+    const stored = await getSetting('admin_access_pin')
+    const expected = stored || '0000'
     if (pinInput === expected) {
-      sessionStorage.setItem(ADMIN_SESSION_KEY, '1')
       setUnlocked(true)
       setError(false)
     } else {

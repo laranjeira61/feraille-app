@@ -15,7 +15,7 @@ echo.
 echo Connexion à %SYNOLOGY_USER%@%SYNOLOGY_HOST%...
 echo.
 
-ssh -t %SYNOLOGY_USER%@%SYNOLOGY_HOST% "sudo bash %SYNOLOGY_SCRIPT%"
+ssh -t -o "SetEnv HOME=/tmp" %SYNOLOGY_USER%@%SYNOLOGY_HOST% "sudo bash %SYNOLOGY_SCRIPT%"
 
 if %ERRORLEVEL% EQU 0 (
     echo.

@@ -40,19 +40,19 @@ import { isApiConfigured } from '../store/settings'
 
 const { Title, Text } = Typography
 
-function PinSetting() {
+function PinRow({ label, settingKey, defaultVal }: { label: string; settingKey: string; defaultVal: string }) {
   const [pin, setPin] = useState('')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    getSetting('admin_pin').then(v => { if (v) setPin(v) })
-  }, [])
+    getSetting(settingKey).then(v => { if (v) setPin(v) })
+  }, [settingKey])
 
   async function handleSave() {
     if (!pin.trim()) { message.warning('Entrez un code PIN'); return }
     setSaving(true)
     try {
-      await setSetting('admin_pin', pin.trim())
+      await setSetting(settingKey, pin.trim())
       message.success('Code PIN enregistré')
     } catch {
       message.error('Erreur lors de la sauvegarde')
@@ -62,15 +62,15 @@ function PinSetting() {
   }
 
   return (
-    <Row gutter={8} align="middle">
-      <Col>
-        <Text>Code PIN pour supprimer une fiche :</Text>
+    <Row gutter={8} align="middle" style={{ marginBottom: 12 }}>
+      <Col style={{ width: 260 }}>
+        <Text>{label}</Text>
       </Col>
       <Col>
         <Input.Password
           value={pin}
           onChange={e => setPin(e.target.value)}
-          placeholder="ex: 1234"
+          placeholder={`ex: ${defaultVal}`}
           maxLength={8}
           style={{ width: 150 }}
           onPressEnter={handleSave}
@@ -82,9 +82,18 @@ function PinSetting() {
         </Button>
       </Col>
       <Col>
-        <Text type="secondary" style={{ fontSize: 12 }}>Par défaut : 1234</Text>
+        <Text type="secondary" style={{ fontSize: 12 }}>Par défaut : {defaultVal}</Text>
       </Col>
     </Row>
+  )
+}
+
+function PinSetting() {
+  return (
+    <>
+      <PinRow label="Code PIN accès Administration :" settingKey="admin_access_pin" defaultVal="0000" />
+      <PinRow label="Code PIN suppression de fiche :" settingKey="delete_pin" defaultVal="1234" />
+    </>
   )
 }
 

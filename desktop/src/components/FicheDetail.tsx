@@ -133,7 +133,7 @@ const FicheDetail: React.FC<FicheDetailProps> = ({ ficheId, open, onClose, onUpd
 
   async function handleDelete() {
     if (!fiche) return
-    const adminPin = await getSetting('admin_pin')
+    const adminPin = await getSetting('delete_pin')
     const expected = adminPin || '1234'
     if (deletePin !== expected) {
       message.error('Code PIN incorrect')
