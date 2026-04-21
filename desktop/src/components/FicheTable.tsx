@@ -50,6 +50,8 @@ const FicheTable: React.FC = () => {
   useEffect(() => {
     loadEmployes()
     loadFiches()
+    const interval = setInterval(() => loadFiches(), 30_000)
+    return () => clearInterval(interval)
   }, [])
 
   async function loadEmployes() {
@@ -139,8 +141,8 @@ const FicheTable: React.FC = () => {
       width: 100,
       render: (source: string) => (
         <Badge
-          color={source === 'TABLETTE' ? 'blue' : 'purple'}
-          text={source === 'TABLETTE' ? 'Tablette' : 'Bureau'}
+          color={source === 'FERRAILLE' ? 'purple' : 'blue'}
+          text={source === 'FERRAILLE' ? 'Bureau' : source}
         />
       ),
     },

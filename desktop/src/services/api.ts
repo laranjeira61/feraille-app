@@ -122,6 +122,10 @@ export async function deleteEmploye(id: number): Promise<void> {
   await apiClient.delete(`/api/employes/${id}`)
 }
 
+export async function deleteFiche(id: number): Promise<void> {
+  await apiClient.delete(`/api/fiches/${id}`)
+}
+
 export async function exportPdf(params: ExportPdfParams): Promise<ArrayBuffer> {
   const queryParams: Record<string, string> = { mode: params.mode }
 

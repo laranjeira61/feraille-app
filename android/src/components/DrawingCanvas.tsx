@@ -1,23 +1,20 @@
 import React, { useRef, forwardRef, useImperativeHandle, useState } from 'react';
-import { View, StyleSheet, LayoutChangeEvent } from 'react-native';
+import { View, StyleSheet, LayoutChangeEvent, TouchableWithoutFeedback } from 'react-native';
 import SignatureCanvas from 'react-native-signature-canvas';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface DrawingCanvasRef {
-  /** Clears the canvas */
   clear: () => void;
-  /** Reads the current drawing as a base64 PNG data URI */
   readSignature: () => void;
+  setEraseMode: (erase: boolean) => void;
 }
 
 interface DrawingCanvasProps {
-  /** Called with the base64 PNG data URI when readSignature() is triggered */
   onSave: (dataUri: string) => void;
-  /** Called when the canvas is cleared or empty */
   onEmpty?: () => void;
-  /** Pre-fill the canvas with an existing base64 PNG (used when returning to a saved page) */
   dataURL?: string;
+  disabled?: boolean;
 }
 
 // ─── Webview style injected into the signature canvas ────────────────────────
@@ -61,17 +58,15 @@ const webStyle = `
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
-  ({ onSave, onEmpty, dataURL }, ref) => {
+  ({ onSave, onEmpty, dataURL, disabled = false }, ref) => {
     const sigRef = useRef<any>(null);
     const [canvasHeight, setCanvasHeight] = useState(0);
+    const [eraseMode, setEraseModeState] = useState(false);
 
     useImperativeHandle(ref, () => ({
-      clear: () => {
-        sigRef.current?.clearSignature();
-      },
-      readSignature: () => {
-        sigRef.current?.readSignature();
-      },
+      clear: () => { sigRef.current?.clearSignature(); },
+      readSignature: () => { sigRef.current?.readSignature(); },
+      setEraseMode: (erase: boolean) => { setEraseModeState(erase); },
     }));
 
     const handleLayout = (e: LayoutChangeEvent) => {
@@ -106,14 +101,17 @@ const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
           onEmpty={handleEmpty}
           webStyle={webStyle}
           backgroundColor="rgba(250,250,250,1)"
-          penColor="#1a1a2e"
-          minWidth={2}
-          maxWidth={5}
+          penColor={eraseMode ? 'rgba(250,250,250,1)' : '#1a1a2e'}
+          minWidth={eraseMode ? 12 : 2}
+          maxWidth={eraseMode ? 24 : 5}
           scrollable={false}
           autoClear={false}
           dataURL={dataURL ?? ''}
           style={canvasHeight > 0 ? { height: canvasHeight } : { flex: 1 }}
         />
+        {disabled && (
+          <View style={styles.disabledOverlay} pointerEvents="box-only" />
+        )}
       </View>
     );
   }
@@ -133,5 +131,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 2,
     borderColor: '#ddd',
+  },
+  disabledOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(200,200,200,0.45)',
+    borderRadius: 10,
   },
 });

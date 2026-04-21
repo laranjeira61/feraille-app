@@ -21,7 +21,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import DrawingCanvas, { DrawingCanvasRef } from '../components/DrawingCanvas';
 import EmployeePicker from '../components/EmployeePicker';
 import ConfirmModal, { ModalType } from '../components/ConfirmModal';
-import { getEmployes, createFiche, getApiUrl, Employe } from '../services/api';
+import { getEmployes, createFiche, getApiUrl, getTabletName, Employe } from '../services/api';
 import { formatDateLong, formatTime } from '../utils/date';
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -44,6 +44,7 @@ const FicheScreen: React.FC = () => {
   const [loadingEmployes, setLoadingEmployes] = useState(false);
   const [errorEmployes, setErrorEmployes] = useState(false);
   const [apiConfigured, setApiConfigured] = useState(true);
+  const [tabletName, setTabletName] = useState('Tablette');
 
   // ── Form state ─────────────────────────────────────────────────────────────
   const [selectedEmploye, setSelectedEmploye] = useState<Employe | null>(null);
@@ -52,6 +53,7 @@ const FicheScreen: React.FC = () => {
   // ── Drawing pages ──────────────────────────────────────────────────────────
   const [drawingPages, setDrawingPages] = useState<string[]>(['']);
   const [currentPage, setCurrentPage] = useState(0);
+  const [eraseMode, setEraseMode] = useState(false);
 
   // ── Submission state ───────────────────────────────────────────────────────
   const [submitting, setSubmitting] = useState(false);
@@ -78,6 +80,8 @@ const FicheScreen: React.FC = () => {
         const url = await getApiUrl();
         if (!url) { setApiConfigured(false); setErrorEmployes(true); return; }
         setApiConfigured(true);
+        const name = await getTabletName();
+        setTabletName(name.trim() || 'Tablette');
         loadEmployes();
       };
       init();
@@ -162,7 +166,7 @@ const FicheScreen: React.FC = () => {
         employe_nom: selectedEmploye.nom,
         client: client.trim(),
         notes_dessin: JSON.stringify(drawingPages),
-        source: 'TicketPro',
+        source: tabletName,
       });
 
       setModalType('success');
@@ -278,9 +282,9 @@ const FicheScreen: React.FC = () => {
 
             {/* Submit */}
             <TouchableOpacity
-              style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+              style={[styles.submitButton, (!selectedEmploye || submitting) && styles.submitButtonDisabled]}
               onPress={handleSubmit}
-              disabled={submitting}
+              disabled={!selectedEmploye || submitting}
               activeOpacity={0.85}
             >
               {submitting ? (
@@ -348,11 +352,28 @@ const FicheScreen: React.FC = () => {
                 </TouchableOpacity>
               )}
 
+              {/* Eraser toggle — only on active last page */}
+              {isLastPage && (
+                <TouchableOpacity
+                  style={[styles.clearButton, eraseMode && styles.eraseModeActive]}
+                  onPress={() => {
+                    const next = !eraseMode;
+                    setEraseMode(next);
+                    canvasRef.current?.setEraseMode(next);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.clearButtonText, eraseMode && styles.eraseModeActiveText]}>
+                    {eraseMode ? '✏️ Stylo' : '🧹 Gomme'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
               {/* Clear — only on active last page */}
               {isLastPage && (
                 <TouchableOpacity
                   style={styles.clearButton}
-                  onPress={() => { canvasRef.current?.clear(); handleCanvasEmpty(); }}
+                  onPress={() => { canvasRef.current?.clear(); handleCanvasEmpty(); setEraseMode(false); canvasRef.current?.setEraseMode(false); }}
                   activeOpacity={0.8}
                 >
                   <Text style={styles.clearButtonText}>Effacer</Text>
@@ -369,6 +390,7 @@ const FicheScreen: React.FC = () => {
               onSave={handleCanvasSave}
               onEmpty={handleCanvasEmpty}
               dataURL={canvasInitialDataRef.current}
+              disabled={!selectedEmploye}
             />
           ) : (
             /* Previous pages: read-only image */
@@ -609,6 +631,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   clearButtonText: { color: '#ffffff', fontSize: 17, fontWeight: '700' },
+  eraseModeActive: { backgroundColor: '#1565c0' },
+  eraseModeActiveText: { color: '#ffffff' },
 
   // Saved page (read-only)
   savedPageContainer: {

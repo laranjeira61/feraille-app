@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom'
+import React, { useState, useEffect, useCallback } from 'react'
+import { HashRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   Layout,
   Menu,
@@ -10,7 +10,10 @@ import {
   Button,
   notification,
   Alert,
+  Modal,
+  Input,
 } from 'antd'
+import { LockOutlined } from '@ant-design/icons'
 import {
   FileTextOutlined,
   SettingOutlined,
@@ -20,8 +23,61 @@ import {
 } from '@ant-design/icons'
 import FichesPage from './pages/FichesPage'
 import AdminPage from './pages/AdminPage'
-import { getApiUrl } from './services/api'
+import { getApiUrl, getSetting } from './services/api'
 import { isApiConfigured } from './store/settings'
+
+const ADMIN_SESSION_KEY = 'admin_unlocked'
+
+function AdminGuard({ children }: { children: React.ReactNode }) {
+  const navigate = useNavigate()
+  const [pinInput, setPinInput] = useState('')
+  const [error, setError] = useState(false)
+  const [unlocked, setUnlocked] = useState(
+    sessionStorage.getItem(ADMIN_SESSION_KEY) === '1'
+  )
+
+  const handleUnlock = useCallback(async () => {
+    const stored = await getSetting('admin_pin')
+    const expected = stored || '1234'
+    if (pinInput === expected) {
+      sessionStorage.setItem(ADMIN_SESSION_KEY, '1')
+      setUnlocked(true)
+      setError(false)
+    } else {
+      setError(true)
+      setPinInput('')
+    }
+  }, [pinInput])
+
+  if (unlocked) return <>{children}</>
+
+  return (
+    <Modal
+      open
+      closable={false}
+      footer={null}
+      width={360}
+      centered
+      title={<Space><LockOutlined /> Accès Administration</Space>}
+    >
+      <p style={{ marginBottom: 16 }}>Entrez le code PIN administrateur pour accéder à cette section.</p>
+      <Input.Password
+        value={pinInput}
+        onChange={e => { setPinInput(e.target.value); setError(false) }}
+        placeholder="Code PIN"
+        maxLength={8}
+        status={error ? 'error' : undefined}
+        onPressEnter={handleUnlock}
+        autoFocus
+      />
+      {error && <p style={{ color: '#ff4d4f', marginTop: 8, fontSize: 13 }}>Code PIN incorrect.</p>}
+      <Space style={{ marginTop: 16, width: '100%', justifyContent: 'flex-end' }}>
+        <Button onClick={() => navigate('/')}>Annuler</Button>
+        <Button type="primary" onClick={handleUnlock}>Valider</Button>
+      </Space>
+    </Modal>
+  )
+}
 
 const { Header, Sider, Content } = Layout
 const { Text } = Typography
@@ -267,7 +323,7 @@ function AppLayout() {
 
           <Routes>
             <Route path="/" element={<FichesPage />} />
-            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/admin" element={<AdminGuard><AdminPage /></AdminGuard>} />
           </Routes>
         </Content>
       </Layout>

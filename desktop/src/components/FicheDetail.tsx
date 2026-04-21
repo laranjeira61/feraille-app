@@ -14,10 +14,10 @@ import {
   Row,
   Col,
 } from 'antd'
-import { FilePdfOutlined, SaveOutlined } from '@ant-design/icons'
+import { FilePdfOutlined, SaveOutlined, DeleteOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import type { Fiche, StatutFiche } from '../services/api'
-import { getFiche, updateFiche, exportPdf } from '../services/api'
+import { getFiche, updateFiche, deleteFiche, exportPdf, getSetting } from '../services/api'
 import StatusBadge from './StatusBadge'
 
 const { Title, Text } = Typography
@@ -33,11 +33,16 @@ interface FicheDetailProps {
 /** Parse notes_dessin — supports both old single base64 and new JSON array format */
 function parseDrawingPages(notesDessin: string | null | undefined): string[] {
   if (!notesDessin) return []
+  const toDataUri = (v: string) =>
+    v.startsWith('data:') ? v : `data:image/png;base64,${v}`
   try {
     const parsed = JSON.parse(notesDessin)
-    if (Array.isArray(parsed)) return parsed.filter((p: unknown) => typeof p === 'string' && p.length > 0)
+    if (Array.isArray(parsed))
+      return parsed
+        .filter((p: unknown) => typeof p === 'string' && p.length > 0)
+        .map((p: string) => toDataUri(p))
   } catch { /* not JSON — old format */ }
-  return [notesDessin]
+  return [toDataUri(notesDessin)]
 }
 
 const FicheDetail: React.FC<FicheDetailProps> = ({ ficheId, open, onClose, onUpdated }) => {
@@ -49,6 +54,9 @@ const FicheDetail: React.FC<FicheDetailProps> = ({ ficheId, open, onClose, onUpd
   const [newStatut, setNewStatut] = useState<StatutFiche>('EN_ATTENTE')
   const [commentaire, setCommentaire] = useState('')
   const [drawingPageIdx, setDrawingPageIdx] = useState(0)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deletePin, setDeletePin] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (open && ficheId !== null) {
@@ -123,36 +131,71 @@ const FicheDetail: React.FC<FicheDetailProps> = ({ ficheId, open, onClose, onUpd
     }
   }
 
+  async function handleDelete() {
+    if (!fiche) return
+    const adminPin = await getSetting('admin_pin')
+    const expected = adminPin || '1234'
+    if (deletePin !== expected) {
+      message.error('Code PIN incorrect')
+      return
+    }
+    setDeleting(true)
+    try {
+      await deleteFiche(fiche.id)
+      message.success(`Fiche #${fiche.id} supprimée`)
+      setDeleteModalOpen(false)
+      onUpdated()
+      onClose()
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      message.error(`Erreur suppression : ${msg}`)
+    } finally {
+      setDeleting(false)
+      setDeletePin('')
+    }
+  }
+
   const formatDate = (dateStr: string) => {
     return dayjs(dateStr).format('DD/MM/YYYY')
   }
 
   const footer = (
-    <Space>
+    <Space style={{ width: '100%', justifyContent: 'space-between' }}>
       <Button
-        type="primary"
-        icon={<FilePdfOutlined />}
-        onClick={handleExportPdf}
-        loading={exporting}
+        danger
+        icon={<DeleteOutlined />}
+        onClick={() => { setDeletePin(''); setDeleteModalOpen(true) }}
         disabled={!fiche}
       >
-        Exporter en PDF
+        Supprimer
       </Button>
-      <Button
-        type="primary"
-        icon={<SaveOutlined />}
-        onClick={handleSave}
-        loading={saving}
-        disabled={!fiche}
-        style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
-      >
-        Enregistrer
-      </Button>
-      <Button onClick={onClose}>Fermer</Button>
+      <Space>
+        <Button
+          type="primary"
+          icon={<FilePdfOutlined />}
+          onClick={handleExportPdf}
+          loading={exporting}
+          disabled={!fiche}
+        >
+          Exporter en PDF
+        </Button>
+        <Button
+          type="primary"
+          icon={<SaveOutlined />}
+          onClick={handleSave}
+          loading={saving}
+          disabled={!fiche}
+          style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+        >
+          Enregistrer
+        </Button>
+        <Button onClick={onClose}>Fermer</Button>
+      </Space>
     </Space>
   )
 
   return (
+    <>
     <Modal
       title={
         fiche
@@ -209,7 +252,7 @@ const FicheDetail: React.FC<FicheDetailProps> = ({ ficheId, open, onClose, onUpd
                   <img
                     src={pages[idx]}
                     alt={`Dessin page ${idx + 1}`}
-                    style={{ maxWidth: '100%', maxHeight: 400, objectFit: 'contain', borderRadius: 4 }}
+                    style={{ display: 'block', maxWidth: '100%', height: 'auto', maxHeight: '60vh', margin: '0 auto', borderRadius: 4 }}
                   />
                 </div>
               </>
@@ -272,6 +315,33 @@ const FicheDetail: React.FC<FicheDetailProps> = ({ ficheId, open, onClose, onUpd
         </>
       )}
     </Modal>
+
+    <Modal
+      title="Confirmer la suppression"
+      open={deleteModalOpen}
+      onCancel={() => setDeleteModalOpen(false)}
+      footer={[
+        <Button key="cancel" onClick={() => setDeleteModalOpen(false)}>Annuler</Button>,
+        <Button key="confirm" danger loading={deleting} onClick={handleDelete}>
+          Supprimer définitivement
+        </Button>,
+      ]}
+      width={400}
+    >
+      <p>Cette action est <strong>irréversible</strong>. Entrez le code PIN administrateur pour confirmer.</p>
+      <Input.Password
+        value={deletePin}
+        onChange={(e) => setDeletePin(e.target.value)}
+        placeholder="Code PIN (défaut : 1234)"
+        maxLength={8}
+        onPressEnter={handleDelete}
+        autoFocus
+      />
+      <p style={{ marginTop: 8, fontSize: 12, color: '#888' }}>
+        Le code PIN se configure dans Paramètres → Admin.
+      </p>
+    </Modal>
+    </>
   )
 }
 

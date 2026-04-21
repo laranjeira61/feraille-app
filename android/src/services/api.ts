@@ -21,6 +21,7 @@ export interface FicheData {
 // ─── AsyncStorage key ────────────────────────────────────────────────────────
 
 export const API_URL_KEY = 'API_BASE_URL';
+export const TABLET_NAME_KEY = 'TABLET_NAME';
 
 // ─── Axios instance factory ──────────────────────────────────────────────────
 
@@ -88,6 +89,16 @@ export async function getApiUrl(): Promise<string> {
  */
 export async function saveApiUrl(url: string): Promise<void> {
   await AsyncStorage.setItem(API_URL_KEY, url.trim());
+}
+
+/** Returns the stored tablet name, or empty string if not set. */
+export async function getTabletName(): Promise<string> {
+  return (await AsyncStorage.getItem(TABLET_NAME_KEY)) ?? '';
+}
+
+/** Saves the tablet name to AsyncStorage. */
+export async function saveTabletName(name: string): Promise<void> {
+  await AsyncStorage.setItem(TABLET_NAME_KEY, name.trim());
 }
 
 /**

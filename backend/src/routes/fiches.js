@@ -104,6 +104,20 @@ router.post('/', (req, res, next) => {
   }
 });
 
+// DELETE /api/fiches/:id
+router.delete('/:id', (req, res, next) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+    const fiche = db.prepare('SELECT id FROM fiches WHERE id = ?').get(Number(id));
+    if (!fiche) return res.status(404).json({ error: `Fiche ${id} introuvable.` });
+    db.prepare('DELETE FROM fiches WHERE id = ?').run(Number(id));
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
 // PUT /api/fiches/:id
 router.put('/:id', (req, res, next) => {
   try {
@@ -120,7 +134,7 @@ router.put('/:id', (req, res, next) => {
     const params = [];
 
     if (statut !== undefined) {
-      const validStatuts = ['EN_ATTENTE', 'VALIDE', 'REFUSE', 'EN_COURS'];
+      const validStatuts = ['EN_ATTENTE', 'TRAITEE', 'A_REVOIR'];
       if (!validStatuts.includes(statut)) {
         const err = new Error(`Invalid statut. Must be one of: ${validStatuts.join(', ')}`);
         err.type = 'validation';

@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useNavigation } from '@react-navigation/native';
-import { getApiUrl, saveApiUrl, checkVersion } from '../services/api';
+import { getApiUrl, saveApiUrl, checkVersion, getTabletName, saveTabletName } from '../services/api';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -20,6 +20,7 @@ const SettingsScreen: React.FC = () => {
   const navigation = useNavigation();
 
   const [apiUrl, setApiUrl] = useState('');
+  const [tabletName, setTabletName] = useState('');
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{
@@ -27,9 +28,10 @@ const SettingsScreen: React.FC = () => {
     message: string;
   } | null>(null);
 
-  // Load stored URL on mount
+  // Load stored settings on mount
   useEffect(() => {
     getApiUrl().then((url) => setApiUrl(url));
+    getTabletName().then((name) => setTabletName(name));
   }, []);
 
   // ── Save ──────────────────────────────────────────────────────────────────
@@ -45,16 +47,17 @@ const SettingsScreen: React.FC = () => {
     setSaving(true);
     try {
       await saveApiUrl(apiUrl.trim());
+      await saveTabletName(tabletName.trim());
       setTestResult(null);
-      Alert.alert('Enregistré', "L'URL API a été sauvegardée.", [
+      Alert.alert('Enregistré', 'Les paramètres ont été sauvegardés.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch {
-      Alert.alert('Erreur', "Impossible de sauvegarder l'URL.");
+      Alert.alert('Erreur', 'Impossible de sauvegarder les paramètres.');
     } finally {
       setSaving(false);
     }
-  }, [apiUrl, navigation]);
+  }, [apiUrl, tabletName, navigation]);
 
   // ── Test connection ────────────────────────────────────────────────────────
 
@@ -112,6 +115,19 @@ const SettingsScreen: React.FC = () => {
             Entrez l'adresse IP et le port du serveur backend.{'\n'}
             Exemple : <Text style={styles.codeExample}>http://192.168.1.10:3000</Text>
           </Text>
+
+          {/* Tablet name input */}
+          <Text style={styles.label}>Nom de cette tablette</Text>
+          <TextInput
+            style={styles.input}
+            value={tabletName}
+            onChangeText={setTabletName}
+            placeholder="Ex : Tablette 1, Atelier A..."
+            placeholderTextColor="#bbb"
+            autoCapitalize="words"
+            autoCorrect={false}
+            returnKeyType="next"
+          />
 
           {/* URL input */}
           <Text style={styles.label}>URL de base de l'API</Text>

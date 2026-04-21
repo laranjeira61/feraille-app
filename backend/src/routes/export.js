@@ -171,9 +171,14 @@ function drawFicheCard(doc, fiche, yStart) {
           y += 18;
 
           const maxImgWidth = cardWidth - 20;
-          const maxImgHeight = 200;
+          const maxImgHeight = 320;
+
+          const imgObj = doc.openImage(imageBuffer);
+          const scale = Math.min(maxImgWidth / imgObj.width, maxImgHeight / imgObj.height);
+          const actualHeight = Math.round(imgObj.height * scale);
+
           doc.image(imageBuffer, margin + 10, y, { fit: [maxImgWidth, maxImgHeight], align: 'center' });
-          y += maxImgHeight + 10;
+          y += actualHeight + 10;
         }
       } catch (imgErr) {
         console.warn(`Could not embed image page ${pi} for fiche #${fiche.id}:`, imgErr.message);

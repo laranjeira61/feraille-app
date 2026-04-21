@@ -40,6 +40,54 @@ import { isApiConfigured } from '../store/settings'
 
 const { Title, Text } = Typography
 
+function PinSetting() {
+  const [pin, setPin] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    getSetting('admin_pin').then(v => { if (v) setPin(v) })
+  }, [])
+
+  async function handleSave() {
+    if (!pin.trim()) { message.warning('Entrez un code PIN'); return }
+    setSaving(true)
+    try {
+      await setSetting('admin_pin', pin.trim())
+      message.success('Code PIN enregistré')
+    } catch {
+      message.error('Erreur lors de la sauvegarde')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Row gutter={8} align="middle">
+      <Col>
+        <Text>Code PIN pour supprimer une fiche :</Text>
+      </Col>
+      <Col>
+        <Input.Password
+          value={pin}
+          onChange={e => setPin(e.target.value)}
+          placeholder="ex: 1234"
+          maxLength={8}
+          style={{ width: 150 }}
+          onPressEnter={handleSave}
+        />
+      </Col>
+      <Col>
+        <Button type="primary" icon={<SaveOutlined />} onClick={handleSave} loading={saving}>
+          Enregistrer
+        </Button>
+      </Col>
+      <Col>
+        <Text type="secondary" style={{ fontSize: 12 }}>Par défaut : 1234</Text>
+      </Col>
+    </Row>
+  )
+}
+
 interface EditableEmploye extends Employe {
   editing?: boolean
   editNom?: string
@@ -442,6 +490,10 @@ const AdminPage: React.FC = () => {
         <Text type="secondary" style={{ fontSize: 12 }}>
           URL actuelle : <strong>{getApiUrl()}</strong>
         </Text>
+      </Card>
+
+      <Card title="Sécurité — Code PIN suppression" style={{ marginTop: 24 }}>
+        <PinSetting />
       </Card>
     </div>
   )

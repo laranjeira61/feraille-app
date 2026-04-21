@@ -3,9 +3,7 @@
     "name": "TicketPro",
     "slug": "feraille-app",
     "version": "1.0.0",
-    "runtimeVersion": {
-      "policy": "sdkVersion"
-    },
+    "runtimeVersion": "1.0.0",
     "updates": {
       "url": "https://u.expo.dev/06089b56-ea66-4a4e-b384-60fcf8cc359e",
       "fallbackToCacheTimeout": 0
