@@ -31,6 +31,13 @@ function runMigrations(db) {
     );
   `);
 
+  // Add type_fiche column to existing databases
+  try {
+    db.exec("ALTER TABLE fiches ADD COLUMN type_fiche TEXT DEFAULT 'FACTURE'");
+  } catch {
+    // Column already exists
+  }
+
   console.log('Database migrations applied successfully.');
 }
 

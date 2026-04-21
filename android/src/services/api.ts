@@ -16,6 +16,7 @@ export interface FicheData {
   /** JSON array of base64 PNG data URIs (one per drawing page) */
   notes_dessin: string;
   source: string;
+  type_fiche: 'FACTURE' | 'PROJET';
 }
 
 // ─── AsyncStorage key ────────────────────────────────────────────────────────

@@ -21,7 +21,7 @@ import {
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { Dayjs } from 'dayjs'
-import type { Fiche, FicheFilters, StatutFiche, Employe } from '../services/api'
+import type { Fiche, FicheFilters, StatutFiche, TypeFiche, Employe } from '../services/api'
 import { getFiches, getEmployes, getSetting } from '../services/api'
 import StatusBadge from './StatusBadge'
 import FicheDetail from './FicheDetail'
@@ -41,6 +41,7 @@ const FicheTable: React.FC = () => {
   const [statut, setStatut] = useState<StatutFiche | ''>('')
   const [client, setClient] = useState('')
   const [employeId, setEmployeId] = useState<number | ''>('')
+  const [typeFiche, setTypeFiche] = useState<TypeFiche | ''>('')
 
   // Modals
   const [selectedFicheId, setSelectedFicheId] = useState<number | null>(null)
@@ -65,6 +66,7 @@ const FicheTable: React.FC = () => {
         statut: statut || undefined,
         client: client || undefined,
         employe_id: employeId || undefined,
+        type_fiche: typeFiche || undefined,
       }
       const data = await getFiches(currentFilters)
       setFiches(data)
@@ -98,6 +100,7 @@ const FicheTable: React.FC = () => {
     if (statut) filters.statut = statut
     if (client.trim()) filters.client = client.trim()
     if (employeId) filters.employe_id = employeId
+    if (typeFiche) filters.type_fiche = typeFiche
     loadFiches(filters)
   }
 
@@ -106,6 +109,7 @@ const FicheTable: React.FC = () => {
     setStatut('')
     setClient('')
     setEmployeId('')
+    setTypeFiche('')
     loadFiches({})
   }
 
@@ -139,6 +143,18 @@ const FicheTable: React.FC = () => {
         <Tooltip title={client}>
           <span>{client}</span>
         </Tooltip>
+      ),
+    },
+    {
+      title: 'Type',
+      dataIndex: 'type_fiche',
+      key: 'type_fiche',
+      width: 100,
+      render: (type: TypeFiche) => (
+        <Badge
+          color={type === 'PROJET' ? 'purple' : 'blue'}
+          text={type === 'PROJET' ? 'Projet' : 'Facture'}
+        />
       ),
     },
     {
@@ -265,6 +281,20 @@ const FicheTable: React.FC = () => {
                 ...employes
                   .filter((e) => e.actif)
                   .map((e) => ({ value: e.id, label: e.nom })),
+              ]}
+            />
+          </Col>
+          <Col xs={24} sm={12} md={4} lg={3}>
+            <Select
+              value={typeFiche}
+              onChange={(v) => setTypeFiche(v)}
+              style={{ width: '100%' }}
+              placeholder="Type"
+              allowClear
+              options={[
+                { value: '', label: 'Tous les types' },
+                { value: 'FACTURE', label: 'Facture' },
+                { value: 'PROJET', label: 'Projet' },
               ]}
             />
           </Col>

@@ -16,6 +16,7 @@ import {
   Image,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useKeepAwake } from 'expo-keep-awake';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 import DrawingCanvas, { DrawingCanvasRef } from '../components/DrawingCanvas';
@@ -27,6 +28,7 @@ import { formatDateLong, formatTime } from '../utils/date';
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const FicheScreen: React.FC = () => {
+  useKeepAwake();
   const navigation = useNavigation<any>();
   const canvasRef = useRef<DrawingCanvasRef>(null);
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -49,6 +51,7 @@ const FicheScreen: React.FC = () => {
   // ── Form state ─────────────────────────────────────────────────────────────
   const [selectedEmploye, setSelectedEmploye] = useState<Employe | null>(null);
   const [client, setClient] = useState('');
+  const [typeFiche, setTypeFiche] = useState<'FACTURE' | 'PROJET'>('FACTURE');
 
   // ── Drawing pages ──────────────────────────────────────────────────────────
   const [drawingPages, setDrawingPages] = useState<string[]>(['']);
@@ -136,6 +139,7 @@ const FicheScreen: React.FC = () => {
   const resetForm = useCallback(() => {
     setSelectedEmploye(null);
     setClient('');
+    setTypeFiche('FACTURE');
     setDrawingPages(['']);
     setCurrentPage(0);
     currentPageRef.current = 0;
@@ -167,6 +171,7 @@ const FicheScreen: React.FC = () => {
         client: client.trim(),
         notes_dessin: JSON.stringify(drawingPages),
         source: tabletName,
+        type_fiche: typeFiche,
       });
 
       setModalType('success');
@@ -277,6 +282,31 @@ const FicheScreen: React.FC = () => {
               autoCapitalize="words"
               returnKeyType="done"
             />
+
+            <View style={styles.fieldSpacer} />
+
+            {/* Type de fiche */}
+            <Text style={styles.fieldLabel}>Type de fiche</Text>
+            <View style={styles.typeRow}>
+              <TouchableOpacity
+                style={[styles.typeBtn, typeFiche === 'FACTURE' && styles.typeBtnActive]}
+                onPress={() => setTypeFiche('FACTURE')}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.typeBtnText, typeFiche === 'FACTURE' && styles.typeBtnTextActive]}>
+                  Facture
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.typeBtn, typeFiche === 'PROJET' && styles.typeBtnActive]}
+                onPress={() => setTypeFiche('PROJET')}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.typeBtnText, typeFiche === 'PROJET' && styles.typeBtnTextActive]}>
+                  Projet
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             <View style={styles.formButtonsSpacer} />
 
@@ -526,6 +556,32 @@ const styles = StyleSheet.create({
     color: '#1a1a2e',
     backgroundColor: '#fafafa',
     minHeight: 64,
+  },
+  typeRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  typeBtn: {
+    flex: 1,
+    minHeight: 52,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#ccc',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fafafa',
+  },
+  typeBtnActive: {
+    borderColor: '#1a1a2e',
+    backgroundColor: '#1a1a2e',
+  },
+  typeBtnText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#666',
+  },
+  typeBtnTextActive: {
+    color: '#fff',
   },
   retryButton: {
     marginTop: 10,

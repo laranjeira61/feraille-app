@@ -9,7 +9,7 @@ const { getDb } = require('../db/database');
 router.get('/', (req, res, next) => {
   try {
     const db = getDb();
-    const { statut, source, date_debut, date_fin, client, employe_id } = req.query;
+    const { statut, source, date_debut, date_fin, client, employe_id, type_fiche } = req.query;
 
     let query = 'SELECT * FROM fiches WHERE 1=1';
     const params = [];
@@ -37,6 +37,10 @@ router.get('/', (req, res, next) => {
     if (employe_id) {
       query += ' AND employe_id = ?';
       params.push(Number(employe_id));
+    }
+    if (type_fiche) {
+      query += ' AND type_fiche = ?';
+      params.push(type_fiche);
     }
 
     query += ' ORDER BY date DESC, created_at DESC';
@@ -68,7 +72,7 @@ router.get('/:id', (req, res, next) => {
 router.post('/', (req, res, next) => {
   try {
     const db = getDb();
-    const { date, employe_id, employe_nom, client, notes_dessin, notes_texte, source } = req.body;
+    const { date, employe_id, employe_nom, client, notes_dessin, notes_texte, source, type_fiche } = req.body;
 
     // Validate required fields
     const missing = [];
@@ -82,9 +86,12 @@ router.post('/', (req, res, next) => {
       return next(err);
     }
 
+    const validTypes = ['FACTURE', 'PROJET'];
+    const ficheType = validTypes.includes(type_fiche) ? type_fiche : 'FACTURE';
+
     const stmt = db.prepare(`
-      INSERT INTO fiches (date, employe_id, employe_nom, client, notes_dessin, notes_texte, source)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO fiches (date, employe_id, employe_nom, client, notes_dessin, notes_texte, source, type_fiche)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = stmt.run(
@@ -94,7 +101,8 @@ router.post('/', (req, res, next) => {
       client.trim(),
       notes_dessin || null,
       notes_texte || null,
-      source || 'FERRAILLE'
+      source || 'FERRAILLE',
+      ficheType
     );
 
     const fiche = db.prepare('SELECT * FROM fiches WHERE id = ?').get(result.lastInsertRowid);

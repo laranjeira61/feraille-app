@@ -4,6 +4,7 @@ import axios from 'axios'
 
 export type StatutFiche = 'EN_ATTENTE' | 'TRAITEE' | 'A_REVOIR'
 export type SourceFiche = 'TABLETTE' | 'BUREAU'
+export type TypeFiche = 'FACTURE' | 'PROJET'
 
 export interface Fiche {
   id: number
@@ -16,6 +17,7 @@ export interface Fiche {
   statut: StatutFiche
   commentaire_secretaire: string | null
   source: SourceFiche
+  type_fiche: TypeFiche
   created_at: string
 }
 
@@ -32,6 +34,7 @@ export interface FicheFilters {
   statut?: StatutFiche | ''
   client?: string
   employe_id?: number | ''
+  type_fiche?: TypeFiche | ''
 }
 
 export interface ExportPdfParams {
@@ -84,6 +87,7 @@ export async function getFiches(filters: FicheFilters = {}): Promise<Fiche[]> {
   if (filters.statut) params.statut = filters.statut
   if (filters.client) params.client = filters.client
   if (filters.employe_id) params.employe_id = filters.employe_id
+  if (filters.type_fiche) params.type_fiche = filters.type_fiche
 
   const response = await apiClient.get<Fiche[]>('/api/fiches', { params })
   return response.data
