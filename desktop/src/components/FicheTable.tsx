@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Table,
   Button,
@@ -47,17 +47,6 @@ const FicheTable: React.FC = () => {
   const [detailOpen, setDetailOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
 
-  useEffect(() => {
-    loadEmployes()
-    getSetting('default_statut_filter').then(val => {
-      const defaultStatut = (val as StatutFiche | '') || ''
-      setStatut(defaultStatut)
-      loadFiches({ statut: defaultStatut || undefined })
-    }).catch(() => loadFiches())
-    const interval = setInterval(() => loadFiches(), 30_000)
-    return () => clearInterval(interval)
-  }, [])
-
   async function loadEmployes() {
     try {
       const data = await getEmployes()
@@ -87,6 +76,20 @@ const FicheTable: React.FC = () => {
       setLoading(false)
     }
   }, [dateRange, statut, client, employeId])
+
+  const loadFichesRef = useRef(loadFiches)
+  useEffect(() => { loadFichesRef.current = loadFiches }, [loadFiches])
+
+  useEffect(() => {
+    loadEmployes()
+    getSetting('default_statut_filter').then(val => {
+      const defaultStatut = (val as StatutFiche | '') || ''
+      setStatut(defaultStatut)
+      loadFiches({ statut: defaultStatut || undefined })
+    }).catch(() => loadFiches())
+    const interval = setInterval(() => loadFichesRef.current(), 30_000)
+    return () => clearInterval(interval)
+  }, [])
 
   function handleSearch() {
     const filters: FicheFilters = {}
