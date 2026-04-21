@@ -139,7 +139,7 @@ const FicheTable: React.FC = () => {
       render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
     },
     {
-      title: 'Employé',
+      title: 'Agent',
       dataIndex: 'employe_nom',
       key: 'employe_nom',
       width: 140,
@@ -285,10 +285,10 @@ const FicheTable: React.FC = () => {
               value={employeId}
               onChange={(v) => setEmployeId(v)}
               style={{ width: '100%' }}
-              placeholder="Employé"
+              placeholder="Agent"
               allowClear
               options={[
-                { value: '', label: 'Tous les employés' },
+                { value: '', label: 'Tous les agents' },
                 ...employes
                   .filter((e) => e.actif)
                   .map((e) => ({ value: e.id, label: e.nom })),

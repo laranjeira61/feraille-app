@@ -153,7 +153,7 @@ const FicheScreen: React.FC = () => {
       return;
     }
     if (!selectedEmploye) {
-      Alert.alert('Employé manquant', 'Veuillez sélectionner un employé.');
+      Alert.alert('Agent manquant', 'Veuillez sélectionner un agent.');
       return;
     }
     if (!client.trim()) {
@@ -253,8 +253,8 @@ const FicheScreen: React.FC = () => {
             contentContainerStyle={styles.formPanelContent}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Employee */}
-            <Text style={styles.fieldLabel}>Employé</Text>
+            {/* Agent */}
+            <Text style={styles.fieldLabel}>Agent</Text>
             <EmployeePicker
               employes={employes}
               selectedId={selectedEmploye?.id ?? null}
@@ -265,7 +265,7 @@ const FicheScreen: React.FC = () => {
 
             {errorEmployes && apiConfigured && (
               <TouchableOpacity style={styles.retryButton} onPress={loadEmployes} activeOpacity={0.8}>
-                <Text style={styles.retryButtonText}>↻  Recharger les employés</Text>
+                <Text style={styles.retryButtonText}>↻  Recharger les agents</Text>
               </TouchableOpacity>
             )}
 

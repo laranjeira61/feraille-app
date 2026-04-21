@@ -222,7 +222,7 @@ const FicheDetail: React.FC<FicheDetailProps> = ({ ficheId, open, onClose, onUpd
         <>
           {/* Info grid */}
           <Descriptions bordered size="small" column={2} style={{ marginBottom: 16 }}>
-            <Descriptions.Item label="Employé">{fiche.employe_nom}</Descriptions.Item>
+            <Descriptions.Item label="Agent">{fiche.employe_nom}</Descriptions.Item>
             <Descriptions.Item label="Date">{formatDate(fiche.date)}</Descriptions.Item>
             <Descriptions.Item label="Client">{fiche.client}</Descriptions.Item>
             <Descriptions.Item label="Source">{fiche.source}</Descriptions.Item>

@@ -191,7 +191,7 @@ const AdminPage: React.FC = () => {
       const employe = await createEmploye(newNom.trim())
       setEmployes((prev) => [...prev, { ...employe, editing: false, editNom: employe.nom }])
       setNewNom('')
-      message.success(`Employé "${employe.nom}" ajouté avec succès`)
+      message.success(`Agent "${employe.nom}" ajouté avec succès`)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erreur lors de l\'ajout'
       message.error(`Erreur: ${msg}`)
@@ -224,7 +224,7 @@ const AdminPage: React.FC = () => {
           e.id === id ? { ...e, nom: newNom.trim(), editing: false, editNom: newNom.trim() } : e
         )
       )
-      message.success('Employé mis à jour')
+      message.success('Agent mis à jour')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erreur lors de la mise à jour'
       message.error(`Erreur: ${msg}`)
@@ -242,7 +242,7 @@ const AdminPage: React.FC = () => {
       setEmployes((prev) =>
         prev.map((e) => (e.id === id ? { ...e, actif } : e))
       )
-      message.success(actif ? 'Employé réactivé' : 'Employé désactivé')
+      message.success(actif ? 'Agent réactivé' : 'Agent désactivé')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erreur'
       message.error(`Erreur: ${msg}`)
@@ -362,7 +362,7 @@ const AdminPage: React.FC = () => {
             </Button>
           )}
           <Popconfirm
-            title={record.actif ? 'Désactiver cet employé ?' : 'Réactiver cet employé ?'}
+            title={record.actif ? 'Désactiver cet agent ?' : 'Réactiver cet agent ?'}
             onConfirm={() => toggleActif(record.id, !record.actif)}
             okText="Confirmer"
             cancelText="Annuler"
@@ -387,7 +387,7 @@ const AdminPage: React.FC = () => {
 
       {/* Employee management */}
       <Card
-        title="Gestion des employés"
+        title="Gestion des agents"
         style={{ marginBottom: 24 }}
         extra={
           <Button icon={<UserAddOutlined />} onClick={loadEmployes} size="small">
@@ -401,7 +401,7 @@ const AdminPage: React.FC = () => {
             <Input
               value={newNom}
               onChange={(e) => setNewNom(e.target.value)}
-              placeholder="Nom du nouvel employé..."
+              placeholder="Nom du nouvel agent..."
               onPressEnter={handleAddEmploye}
               size="middle"
             />
@@ -425,7 +425,7 @@ const AdminPage: React.FC = () => {
           loading={loading}
           pagination={false}
           size="small"
-          locale={{ emptyText: 'Aucun employé enregistré' }}
+          locale={{ emptyText: 'Aucun agent enregistré' }}
         />
       </Card>
 

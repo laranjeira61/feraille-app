@@ -102,7 +102,7 @@ function drawFicheCard(doc, fiche, yStart) {
   const valueColor = COLORS.black;
 
   // Row 1
-  doc.fillColor(labelColor).fontSize(8).font('Helvetica').text('Employé:', col1X, y + 6);
+  doc.fillColor(labelColor).fontSize(8).font('Helvetica').text('Agent:', col1X, y + 6);
   doc.fillColor(valueColor).fontSize(9).font('Helvetica-Bold').text(fiche.employe_nom || 'N/A', col1X + 50, y + 6);
 
   doc.fillColor(labelColor).fontSize(8).font('Helvetica').text('Client:', col2X, y + 6);

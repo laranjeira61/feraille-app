@@ -45,7 +45,7 @@ const EmployeePicker: React.FC<EmployeePickerProps> = ({
       <View style={[styles.trigger, styles.triggerDisabled]}>
         <ActivityIndicator color="#1a1a2e" size="small" />
         <Text style={styles.triggerTextPlaceholder}>
-          Chargement des employés…
+          Chargement des agents…
         </Text>
       </View>
     );
@@ -75,7 +75,7 @@ const EmployeePicker: React.FC<EmployeePickerProps> = ({
           }
           numberOfLines={1}
         >
-          {selectedEmploye ? selectedEmploye.nom : 'Sélectionner un employé…'}
+          {selectedEmploye ? selectedEmploye.nom : 'Sélectionner un agent…'}
         </Text>
         <Text style={styles.arrow}>▼</Text>
       </TouchableOpacity>
@@ -97,7 +97,7 @@ const EmployeePicker: React.FC<EmployeePickerProps> = ({
             {/* Header */}
             <View style={styles.dropdownHeader}>
               <Text style={styles.dropdownHeaderText}>
-                Choisir un employé
+                Choisir un agent
               </Text>
               <TouchableOpacity
                 onPress={() => setDropdownVisible(false)}
@@ -139,7 +139,7 @@ const EmployeePicker: React.FC<EmployeePickerProps> = ({
               }}
               ListEmptyComponent={
                 <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyText}>Aucun employé disponible</Text>
+                  <Text style={styles.emptyText}>Aucun agent disponible</Text>
                 </View>
               }
             />
