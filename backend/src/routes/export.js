@@ -32,32 +32,41 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-function drawPageHeader(doc, pageNumber, totalPages) {
+function drawPageHeader(doc, pageNumber, totalPages, logoBase64) {
   const pageWidth = doc.page.width;
   const margin = 40;
 
-  // Header background bar
-  doc.rect(0, 0, pageWidth, 50).fill(COLORS.primary);
+  const headerHeight = 60;
 
-  // Title
-  doc.fillColor(COLORS.white)
-     .fontSize(18)
-     .font('Helvetica-Bold')
-     .text('FERAILLE APP', margin, 15, { align: 'left' });
+  if (logoBase64) {
+    try {
+      let imageBuffer = null;
+      if (logoBase64.startsWith('data:')) {
+        const commaIndex = logoBase64.indexOf(',');
+        if (commaIndex !== -1) {
+          imageBuffer = Buffer.from(logoBase64.substring(commaIndex + 1), 'base64');
+        }
+      } else {
+        imageBuffer = Buffer.from(logoBase64, 'base64');
+      }
+      if (imageBuffer && imageBuffer.length > 0) {
+        const maxLogoWidth = 180;
+        const maxLogoHeight = headerHeight - 8;
+        doc.image(imageBuffer, margin, 4, { fit: [maxLogoWidth, maxLogoHeight], align: 'left', valign: 'center' });
+      }
+    } catch {
+      // Logo non lisible, on laisse vide
+    }
+  }
 
-  // Subtitle
-  doc.fillColor(COLORS.white)
-     .fontSize(10)
-     .font('Helvetica')
-     .text('Export des Fiches', margin + 180, 20, { align: 'left' });
-
-  // Page number
-  doc.fillColor(COLORS.white)
+  // Page number (top right)
+  doc.fillColor(COLORS.darkGray)
      .fontSize(9)
-     .text(`Page ${pageNumber} / ${totalPages}`, 0, 20, { align: 'right', width: pageWidth - margin });
+     .font('Helvetica')
+     .text(`Page ${pageNumber} / ${totalPages}`, 0, 24, { align: 'right', width: pageWidth - margin });
 
-  // Red accent line
-  doc.rect(0, 50, pageWidth, 4).fill(COLORS.accent);
+  // Thin separator line
+  doc.rect(margin, headerHeight, pageWidth - margin * 2, 1).fill(COLORS.midGray);
 
   doc.fillColor(COLORS.black);
 }
@@ -196,7 +205,7 @@ function drawFicheCard(doc, fiche, yStart) {
   return y;
 }
 
-async function generatePDF(fiches, res) {
+async function generatePDF(fiches, res, logoBase64) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       margin: 40,
@@ -226,23 +235,23 @@ async function generatePDF(fiches, res) {
         doc.addPage();
       }
 
-      drawPageHeader(doc, pageNumber, totalPages);
+      drawPageHeader(doc, pageNumber, totalPages, logoBase64);
 
       // Generation date
       doc.fillColor(COLORS.darkGray)
          .fontSize(8)
          .font('Helvetica')
-         .text(`Généré le ${new Date().toLocaleString('fr-FR')}`, 40, 62, {
+         .text(`Généré le ${new Date().toLocaleString('fr-FR')}`, 40, 68, {
            align: 'right',
            width: doc.page.width - 80,
          });
 
-      drawFicheCard(doc, fiche, 78);
+      drawFicheCard(doc, fiche, 84);
     });
 
     // If no fiches
     if (fiches.length === 0) {
-      drawPageHeader(doc, 1, 1);
+      drawPageHeader(doc, 1, 1, logoBase64);
       doc.fillColor(COLORS.darkGray)
          .fontSize(14)
          .font('Helvetica')
@@ -321,7 +330,10 @@ router.get('/pdf', async (req, res, next) => {
       return next(err);
     }
 
-    await generatePDF(fiches, res);
+    const logoRow = db.prepare("SELECT value FROM settings WHERE key = 'logo'").get();
+    const logoBase64 = logoRow?.value || null;
+
+    await generatePDF(fiches, res, logoBase64);
   } catch (err) {
     if (!res.headersSent) {
       next(err);
