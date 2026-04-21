@@ -291,9 +291,22 @@ router.get('/pdf', async (req, res, next) => {
       const placeholders = idList.map(() => '?').join(', ');
       fiches = db.prepare(`SELECT * FROM fiches WHERE id IN (${placeholders}) ORDER BY date DESC`).all(...idList);
 
-    } else if (mode === 'plage') {
+    } else if (mode === 'month') {
+      const { month } = req.query;
+      if (!month) {
+        const err = new Error('Parameter "month" is required for mode month (format: YYYY-MM).');
+        err.type = 'validation';
+        return next(err);
+      }
+      const debut = `${month}-01`;
+      const fin = `${month}-31`;
+      fiches = db.prepare(
+        'SELECT * FROM fiches WHERE date >= ? AND date <= ? ORDER BY date DESC, created_at DESC'
+      ).all(debut, fin);
+
+    } else if (mode === 'range' || mode === 'plage') {
       if (!date_debut || !date_fin) {
-        const err = new Error('Parameters "date_debut" and "date_fin" are required for mode plage.');
+        const err = new Error('Parameters "date_debut" and "date_fin" are required for mode range.');
         err.type = 'validation';
         return next(err);
       }
@@ -303,7 +316,7 @@ router.get('/pdf', async (req, res, next) => {
       ).all(date_debut, date_fin);
 
     } else {
-      const err = new Error('Parameter "mode" must be one of: single, lot, plage.');
+      const err = new Error('Parameter "mode" must be one of: single, month, range.');
       err.type = 'validation';
       return next(err);
     }
