@@ -66,7 +66,11 @@ const DrawingCanvas = forwardRef<DrawingCanvasRef, DrawingCanvasProps>(
     useImperativeHandle(ref, () => ({
       clear: () => { sigRef.current?.clearSignature(); },
       readSignature: () => { sigRef.current?.readSignature(); },
-      setEraseMode: (erase: boolean) => { setEraseModeState(erase); },
+      setEraseMode: (erase: boolean) => {
+        setEraseModeState(erase);
+        sigRef.current?.changePenColor(erase ? 'rgba(250,250,250,1)' : '#1a1a2e');
+        sigRef.current?.changePenSize(erase ? 12 : 2, erase ? 24 : 5);
+      },
     }));
 
     const handleLayout = (e: LayoutChangeEvent) => {
