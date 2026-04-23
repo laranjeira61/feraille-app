@@ -25,6 +25,22 @@ import ConfirmModal, { ModalType } from '../components/ConfirmModal';
 import { getEmployes, createFiche, getApiUrl, getTabletName, Employe } from '../services/api';
 import { formatDateLong, formatTime } from '../utils/date';
 
+// ─── Pen presets ──────────────────────────────────────────────────────────────
+
+const PEN_COLORS = [
+  { color: '#1a1a2e', label: 'Noir' },
+  { color: '#1565c0', label: 'Bleu' },
+  { color: '#c62828', label: 'Rouge' },
+  { color: '#2e7d32', label: 'Vert' },
+  { color: '#e65100', label: 'Orange' },
+];
+
+const PEN_THICKNESSES = [
+  { label: '·', min: 1, max: 3 },
+  { label: '–', min: 2, max: 5 },
+  { label: '━', min: 4, max: 10 },
+];
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const FicheScreen: React.FC = () => {
@@ -52,6 +68,10 @@ const FicheScreen: React.FC = () => {
   const [selectedEmploye, setSelectedEmploye] = useState<Employe | null>(null);
   const [client, setClient] = useState('');
   const [typeFiche, setTypeFiche] = useState<'FACTURE' | 'PROJET'>('FACTURE');
+
+  // ── Pen state ──────────────────────────────────────────────────────────────
+  const [penColorIdx, setPenColorIdx] = useState(0);
+  const [penThicknessIdx, setPenThicknessIdx] = useState(1);
 
   // ── Drawing pages ──────────────────────────────────────────────────────────
   const [drawingPages, setDrawingPages] = useState<string[]>(['']);
@@ -140,6 +160,9 @@ const FicheScreen: React.FC = () => {
     setSelectedEmploye(null);
     setClient('');
     setTypeFiche('FACTURE');
+    setPenColorIdx(0);
+    setPenThicknessIdx(1);
+    setEraseMode(false);
     setDrawingPages(['']);
     setCurrentPage(0);
     currentPageRef.current = 0;
@@ -412,6 +435,62 @@ const FicheScreen: React.FC = () => {
             </View>
           </View>
 
+          {/* Pen toolbar — only on active last page */}
+          {isLastPage && (
+            <View style={styles.penToolbar}>
+              {/* Colors */}
+              <View style={styles.penToolbarSection}>
+                {PEN_COLORS.map((c, i) => (
+                  <TouchableOpacity
+                    key={c.color}
+                    style={[
+                      styles.colorDot,
+                      { backgroundColor: c.color },
+                      penColorIdx === i && !eraseMode && styles.colorDotSelected,
+                    ]}
+                    onPress={() => {
+                      setPenColorIdx(i);
+                      setEraseMode(false);
+                      canvasRef.current?.setPenColor(c.color);
+                    }}
+                    activeOpacity={0.8}
+                  />
+                ))}
+              </View>
+
+              {/* Separator */}
+              <View style={styles.penToolbarSep} />
+
+              {/* Thickness */}
+              <View style={styles.penToolbarSection}>
+                {PEN_THICKNESSES.map((t, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    style={[
+                      styles.thicknessBtn,
+                      penThicknessIdx === i && !eraseMode && styles.thicknessBtnSelected,
+                    ]}
+                    onPress={() => {
+                      setPenThicknessIdx(i);
+                      setEraseMode(false);
+                      canvasRef.current?.setPenColor(PEN_COLORS[penColorIdx].color);
+                      canvasRef.current?.setPenThickness(t.min, t.max);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[
+                      styles.thicknessBtnText,
+                      penThicknessIdx === i && !eraseMode && styles.thicknessBtnTextSelected,
+                      { fontSize: 10 + i * 6 },
+                    ]}>
+                      {t.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
           {/* Active last page: editable canvas */}
           {isLastPage ? (
             <DrawingCanvas
@@ -421,6 +500,9 @@ const FicheScreen: React.FC = () => {
               onEmpty={handleCanvasEmpty}
               dataURL={canvasInitialDataRef.current}
               disabled={!selectedEmploye}
+              initialPenColor={PEN_COLORS[penColorIdx].color}
+              initialPenMin={PEN_THICKNESSES[penThicknessIdx].min}
+              initialPenMax={PEN_THICKNESSES[penThicknessIdx].max}
             />
           ) : (
             /* Previous pages: read-only image */
@@ -689,6 +771,66 @@ const styles = StyleSheet.create({
   clearButtonText: { color: '#ffffff', fontSize: 17, fontWeight: '700' },
   eraseModeActive: { backgroundColor: '#1565c0' },
   eraseModeActiveText: { color: '#ffffff' },
+
+  // Pen toolbar
+  penToolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginBottom: 8,
+    gap: 6,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  penToolbarSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  penToolbarSep: {
+    width: 1,
+    height: 24,
+    backgroundColor: '#ddd',
+    marginHorizontal: 4,
+  },
+  colorDot: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  colorDotSelected: {
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  thicknessBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  thicknessBtnSelected: {
+    backgroundColor: '#1a1a2e',
+  },
+  thicknessBtnText: {
+    color: '#555',
+    fontWeight: '700',
+    lineHeight: 20,
+  },
+  thicknessBtnTextSelected: {
+    color: '#fff',
+  },
 
   // Saved page (read-only)
   savedPageContainer: {
