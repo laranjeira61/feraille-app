@@ -71,7 +71,7 @@ const FicheScreen: React.FC = () => {
 
   // ── Pen state ──────────────────────────────────────────────────────────────
   const [penColorIdx, setPenColorIdx] = useState(0);
-  const [penThicknessIdx, setPenThicknessIdx] = useState(1);
+  const [penThicknessIdx, setPenThicknessIdx] = useState(0);
 
   // ── Drawing pages ──────────────────────────────────────────────────────────
   const [drawingPages, setDrawingPages] = useState<string[]>(['']);
@@ -161,7 +161,7 @@ const FicheScreen: React.FC = () => {
     setClient('');
     setTypeFiche('FACTURE');
     setPenColorIdx(0);
-    setPenThicknessIdx(1);
+    setPenThicknessIdx(0);
     setEraseMode(false);
     setDrawingPages(['']);
     setCurrentPage(0);
@@ -777,56 +777,65 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     marginBottom: 8,
-    gap: 6,
+    gap: 8,
     alignSelf: 'flex-start',
     borderWidth: 1,
     borderColor: '#e0e0e0',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
   },
   penToolbarSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
   penToolbarSep: {
     width: 1,
-    height: 24,
+    height: 32,
     backgroundColor: '#ddd',
     marginHorizontal: 4,
   },
   colorDot: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 2,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 3,
     borderColor: 'transparent',
   },
   colorDotSelected: {
     borderColor: '#fff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 3,
-    elevation: 4,
+    shadowOpacity: 0.7,
+    shadowRadius: 4,
+    elevation: 6,
+    transform: [{ scale: 1.15 }],
   },
   thicknessBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 44,
+    height: 44,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f0f0f0',
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
   thicknessBtnSelected: {
     backgroundColor: '#1a1a2e',
+    borderColor: '#1a1a2e',
   },
   thicknessBtnText: {
     color: '#555',
-    fontWeight: '700',
-    lineHeight: 20,
+    fontWeight: '900',
+    lineHeight: 22,
   },
   thicknessBtnTextSelected: {
     color: '#fff',
