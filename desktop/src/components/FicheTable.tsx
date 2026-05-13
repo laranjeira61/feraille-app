@@ -18,6 +18,8 @@ import {
   ReloadOutlined,
   FilePdfOutlined,
   EyeOutlined,
+  BellOutlined,
+  CloseOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { Dayjs } from 'dayjs'
@@ -47,6 +49,11 @@ const FicheTable: React.FC = () => {
   const [selectedFicheId, setSelectedFicheId] = useState<number | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
+
+  // New-fiche notifications
+  const [newFichesNotif, setNewFichesNotif] = useState<Fiche[]>([])
+  const knownIdsRef = useRef<Set<number>>(new Set())
+  const notifInitializedRef = useRef(false)
 
   async function loadEmployes() {
     try {
@@ -82,14 +89,41 @@ const FicheTable: React.FC = () => {
   const loadFichesRef = useRef(loadFiches)
   useEffect(() => { loadFichesRef.current = loadFiches }, [loadFiches])
 
+  // Background notification check — fetches ALL fiches (no filter) to detect new ones
+  const checkNewFiches = useCallback(async () => {
+    try {
+      const data = await getFiches({})
+      if (!notifInitializedRef.current) {
+        notifInitializedRef.current = true
+        knownIdsRef.current = new Set(data.map(f => f.id))
+        return
+      }
+      const newOnes = data.filter(f => !knownIdsRef.current.has(f.id))
+      if (newOnes.length > 0) {
+        setNewFichesNotif(prev => {
+          const existingIds = new Set(prev.map(f => f.id))
+          return [...prev, ...newOnes.filter(f => !existingIds.has(f.id))]
+        })
+      }
+      knownIdsRef.current = new Set(data.map(f => f.id))
+    } catch { /* ignore */ }
+  }, [])
+
+  const checkNewFichesRef = useRef(checkNewFiches)
+  useEffect(() => { checkNewFichesRef.current = checkNewFiches }, [checkNewFiches])
+
   useEffect(() => {
     loadEmployes()
+    checkNewFichesRef.current()
     getSetting('default_statut_filter').then(val => {
       const defaultStatut = (val as StatutFiche | '') || ''
       setStatut(defaultStatut)
       loadFiches({ statut: defaultStatut || undefined })
     }).catch(() => loadFiches())
-    const interval = setInterval(() => loadFichesRef.current(), 30_000)
+    const interval = setInterval(() => {
+      loadFichesRef.current()
+      checkNewFichesRef.current()
+    }, 30_000)
     return () => clearInterval(interval)
   }, [])
 
@@ -387,6 +421,70 @@ const FicheTable: React.FC = () => {
         onClose={() => setExportOpen(false)}
         preselectedId={null}
       />
+
+      {/* New-fiche notification popup */}
+      {newFichesNotif.length > 0 && (
+        <div style={{
+          position: 'fixed',
+          bottom: 28,
+          right: 28,
+          zIndex: 1100,
+          background: '#fff',
+          borderRadius: 12,
+          boxShadow: '0 6px 24px rgba(0,0,0,0.18)',
+          padding: '16px 18px 14px 18px',
+          minWidth: 290,
+          maxWidth: 370,
+          borderLeft: '4px solid #1565c0',
+          animation: 'slideInRight 0.25s ease',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <BellOutlined style={{ color: '#1565c0', fontSize: 16 }} />
+                <span style={{ fontWeight: 700, fontSize: 14, color: '#1a1a2e' }}>
+                  {newFichesNotif.length === 1
+                    ? 'Nouvelle fiche reçue'
+                    : `${newFichesNotif.length} nouvelles fiches reçues`}
+                </span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {newFichesNotif.slice(0, 4).map(f => (
+                  <div key={f.id} style={{
+                    fontSize: 12,
+                    color: '#444',
+                    background: '#f0f4ff',
+                    borderRadius: 6,
+                    padding: '3px 8px',
+                    display: 'flex',
+                    gap: 6,
+                  }}>
+                    <span style={{ fontFamily: 'monospace', color: '#1565c0', fontWeight: 600 }}>
+                      {f.numero ?? `#${f.id}`}
+                    </span>
+                    <span style={{ color: '#666' }}>—</span>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {f.client}
+                    </span>
+                  </div>
+                ))}
+                {newFichesNotif.length > 4 && (
+                  <div style={{ fontSize: 11, color: '#888', paddingLeft: 4 }}>
+                    + {newFichesNotif.length - 4} autre{newFichesNotif.length - 4 > 1 ? 's' : ''}…
+                  </div>
+                )}
+              </div>
+            </div>
+            <Button
+              type="text"
+              size="small"
+              icon={<CloseOutlined />}
+              onClick={() => setNewFichesNotif([])}
+              style={{ color: '#aaa', flexShrink: 0, marginTop: -2 }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
